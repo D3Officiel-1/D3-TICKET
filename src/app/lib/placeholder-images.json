@@ -1,0 +1,17 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "raffle-logo",
+      "description": "Un logo festif pour une tombola",
+      "imageUrl": "https://picsum.photos/seed/raffle/200/200",
+      "imageHint": "festive logo"
+    },
+    {
+      "id": "raffle-prize",
+      "description": "Un cadeau brillant pour le prix",
+      "imageUrl": "https://picsum.photos/seed/gift/400/300",
+      "imageHint": "wrapped gift"
+    }
+  ]
+}
