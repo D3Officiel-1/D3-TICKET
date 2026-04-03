@@ -34,6 +34,11 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
           cols: 1,
           width: '140mm',
           height: '70mm',
+          // Centrage sur A4 (210x297)
+          // 210 - 140 = 70 / 2 = 35mm de marge latérale
+          // 297 - (4*70) = 17 / 2 = 8.5mm de marge haut/bas
+          paddingY: '8.5mm',
+          paddingX: '35mm'
         };
       case 'event':
         return {
@@ -41,6 +46,10 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
           cols: 2,
           width: '100mm',
           height: '70mm',
+          // 210 - (2*100) = 10 / 2 = 5mm de marge latérale
+          // 297 - (4*70) = 17 / 2 = 8.5mm de marge haut/bas
+          paddingY: '8.5mm',
+          paddingX: '5mm'
         };
       case 'raffle':
       default:
@@ -49,6 +58,10 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
           cols: 2,
           width: '100mm',
           height: '50mm',
+          // 210 - (2*100) = 10 / 2 = 5mm de marge latérale
+          // 297 - (5*50) = 47 / 2 = 23.5mm de marge haut/bas
+          paddingY: '23.5mm',
+          paddingX: '5mm'
         };
     }
   }, [config.ticketType]);
@@ -63,18 +76,23 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
 
   return (
     <div className="hidden print:block bg-white w-[210mm] mx-auto">
-      {/* SECTION RECTOS : Toutes les pages de devant d'abord */}
+      {/* SECTION RECTOS */}
       <div className="rectos-section">
         {pages.map((pageTickets, pageIdx) => (
           <div 
             key={`recto-page-${pageIdx}`} 
-            className="page-break-after h-[297mm] w-[210mm] flex flex-wrap content-start items-start justify-center py-[8mm] px-[5mm] gap-0"
+            className="page-break-after h-[297mm] w-[210mm] flex flex-wrap content-start items-start justify-center"
+            style={{ paddingTop: layout.paddingY, paddingBottom: layout.paddingY, paddingLeft: layout.paddingX, paddingRight: layout.paddingX }}
           >
             {pageTickets.map((num) => (
               <div 
                 key={`recto-${num}`} 
-                style={{ width: layout.width, height: layout.height }}
-                className="border-[0.1mm] border-gray-100 overflow-hidden"
+                style={{ 
+                  width: layout.width, 
+                  height: layout.height,
+                  boxSizing: 'border-box'
+                }}
+                className="border-[0.1mm] border-dashed border-gray-300 overflow-hidden"
               >
                 <TicketPreview config={config} number={num} isPrintView={true} isVerso={false} />
               </div>
@@ -83,19 +101,24 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
         ))}
       </div>
 
-      {/* SECTION VERSOS : Toutes les pages de dos ensuite pour ré-insertion facile dans l'imprimante */}
+      {/* SECTION VERSOS */}
       {config.hasVerso && (
         <div className="versos-section">
           {pages.map((pageTickets, pageIdx) => (
             <div 
               key={`verso-page-${pageIdx}`} 
-              className="page-break-after h-[297mm] w-[210mm] flex flex-wrap content-start items-start justify-center py-[8mm] px-[5mm] gap-0"
+              className="page-break-after h-[297mm] w-[210mm] flex flex-wrap content-start items-start justify-center"
+              style={{ paddingTop: layout.paddingY, paddingBottom: layout.paddingY, paddingLeft: layout.paddingX, paddingRight: layout.paddingX }}
             >
               {pageTickets.map((num) => (
                 <div 
                   key={`verso-${num}`} 
-                  style={{ width: layout.width, height: layout.height }}
-                  className="border-[0.1mm] border-gray-100 overflow-hidden"
+                  style={{ 
+                    width: layout.width, 
+                    height: layout.height,
+                    boxSizing: 'border-box'
+                  }}
+                  className="border-[0.1mm] border-dashed border-gray-300 overflow-hidden"
                 >
                   <TicketPreview config={config} number="" isPrintView={true} isVerso={true} />
                 </div>
