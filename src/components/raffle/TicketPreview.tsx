@@ -79,7 +79,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
         )}
       </div>
 
-      {/* Main Part */}
+      {/* Main Part - Content removed as requested */}
       <div className={cn("flex-1 relative z-10", isPrintView ? "p-3" : "p-6")}>
         {!isPrintView && (
           <div className="absolute top-2 right-4 flex gap-1 opacity-20">
