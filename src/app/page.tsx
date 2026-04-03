@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -59,7 +58,7 @@ export default function Home() {
               <Ticket className="w-8 h-8 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-black text-accent tracking-tight font-headline uppercase">D3 TOMBOLA</h1>
+              <h1 className="text-3xl font-black text-accent tracking-tight font-headline uppercase">D3 TICKET</h1>
               <p className="text-sm text-muted-foreground font-medium">Génération de tickets professionnels</p>
             </div>
           </div>
@@ -176,7 +175,7 @@ export default function Home() {
       {/* Footer (Non-printable) */}
       <footer className="no-print mt-20 pt-10 border-t text-center text-muted-foreground px-4">
         <div className="max-w-6xl mx-auto">
-          <p className="text-sm font-medium">© 2024 D3 TOMBOLA — Vos données sont stockées localement sur cet ordinateur.</p>
+          <p className="text-sm font-medium">© 2024 D3 TICKET — Vos données sont stockées localement sur cet ordinateur.</p>
         </div>
       </footer>
     </main>

@@ -1,10 +1,9 @@
-
 import type {Metadata} from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'D3 TOMBOLA - Générateur de tickets',
-  description: 'Générez des tickets de tombola personnalisés et professionnels en quelques clics.',
+  title: 'D3 TICKET - Générateur de tickets',
+  description: 'Générez des tickets personnalisés et professionnels en quelques clics.',
 };
 
 export default function RootLayout({
