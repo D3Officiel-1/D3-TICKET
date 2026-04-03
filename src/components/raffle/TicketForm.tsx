@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Settings2, Sparkles, Printer, Image as ImageIcon, Palette, Layers, Ticket, Star, History, X, Trash2 } from 'lucide-react';
+import { Settings2, Sparkles, Printer, Image as ImageIcon, Palette, Layers, Ticket, Star, History, X, Wand2 } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 interface TicketFormProps {
@@ -106,17 +106,34 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
         </h2>
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label>Couleur du numéro</Label>
+            <div className="flex items-center justify-between">
+              <Label>Couleur du numéro</Label>
+              <Button 
+                variant={config.autoContrast ? "default" : "outline"}
+                size="sm"
+                className="h-7 text-[10px] gap-1 px-2 uppercase font-black tracking-tighter"
+                onClick={() => updateField('autoContrast', !config.autoContrast)}
+              >
+                <Wand2 className="w-3 h-3" />
+                {config.autoContrast ? "Contraste Auto : ON" : "Activer Contraste Auto"}
+              </Button>
+            </div>
             <div className="flex gap-2">
                <Input 
                 type="color"
                 className="w-12 p-1 cursor-pointer h-10"
                 value={config.color} 
-                onChange={(e) => updateField('color', e.target.value)}
+                onChange={(e) => {
+                  updateField('color', e.target.value);
+                  updateField('autoContrast', false);
+                }}
               />
               <Input 
                 value={config.color} 
-                onChange={(e) => updateField('color', e.target.value)}
+                onChange={(e) => {
+                  updateField('color', e.target.value);
+                  updateField('autoContrast', false);
+                }}
                 placeholder="#000000"
                 className="font-mono"
               />

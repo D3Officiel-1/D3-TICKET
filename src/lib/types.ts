@@ -13,6 +13,7 @@ export interface TicketConfig {
   numberY: number;
   numberSize: number;
   ticketType: TicketType;
+  autoContrast?: boolean;
 }
 
 export const DEFAULT_CONFIG: TicketConfig = {
@@ -27,4 +28,5 @@ export const DEFAULT_CONFIG: TicketConfig = {
   numberY: 15,
   numberSize: 24,
   ticketType: 'event_vip',
+  autoContrast: false,
 };

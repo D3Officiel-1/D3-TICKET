@@ -16,6 +16,7 @@ interface TicketPreviewProps {
 
 export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, isPrintView = false, isVerso = false, onConfigChange }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const formattedNumber = String(number).padStart(5, '0');
 
@@ -30,6 +31,61 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
       return false;
     }
   }, [imageUrl]);
+
+  const detectBestColor = useCallback(() => {
+    if (!isValidUrl || !imageUrl || isVerso || !onConfigChange || !config.autoContrast) return;
+
+    const img = new window.Image();
+    img.crossOrigin = "anonymous";
+    img.src = imageUrl;
+
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      canvas.width = 100;
+      canvas.height = 100;
+
+      ctx.drawImage(img, 0, 0, 100, 100);
+
+      const x = Math.floor(config.numberX);
+      const y = Math.floor(config.numberY);
+
+      // Sample a small area around the number position
+      const sampleSize = 5;
+      const data = ctx.getImageData(
+        Math.max(0, x - sampleSize), 
+        Math.max(0, y - sampleSize), 
+        sampleSize * 2, 
+        sampleSize * 2
+      ).data;
+
+      let totalLuminance = 0;
+      for (let i = 0; i < data.length; i += 4) {
+        // Luminance calculation: 0.299R + 0.587G + 0.114B
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        totalLuminance += (0.299 * r + 0.587 * g + 0.114 * b);
+      }
+
+      const avgLuminance = totalLuminance / (data.length / 4);
+      
+      // If dark background, use white. If light background, use black.
+      const bestColor = avgLuminance > 128 ? "#000000" : "#FFFFFF";
+      
+      if (config.color !== bestColor) {
+        onConfigChange({ ...config, color: bestColor });
+      }
+    };
+  }, [imageUrl, isValidUrl, isVerso, config, onConfigChange]);
+
+  useEffect(() => {
+    if (config.autoContrast) {
+      detectBestColor();
+    }
+  }, [config.autoContrast, config.numberX, config.numberY, config.backgroundImage, detectBestColor]);
 
   const updatePosition = useCallback((clientX: number, clientY: number) => {
     if (!containerRef.current || !onConfigChange || isVerso) return;
@@ -105,10 +161,10 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
   const previewStyles = useMemo(() => {
     if (isPrintView) return {};
     
-    // Ratios d'aspect basés sur les dimensions physiques
-    let ratio = 5/10; // Tombola par défaut
-    if (config.ticketType === 'event_vip') ratio = 7/14; // 0.5 aussi mais largeur différente
-    if (config.ticketType === 'event') ratio = 7/10; // 0.7
+    // Aspect ratios based on physical dimensions
+    let ratio = 5/10; // Raffle default
+    if (config.ticketType === 'event_vip') ratio = 7/14; 
+    if (config.ticketType === 'event') ratio = 7/10;
 
     const width = config.ticketType === 'event_vip' ? 650 : 600;
     return {
@@ -136,13 +192,13 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
       onMouseDown={handleMouseDown}
     >
       {isValidUrl && imageUrl ? (
-        <Image 
+        <img 
+          ref={imageRef}
           src={imageUrl} 
           alt={isVerso ? "Verso" : "Recto"} 
-          fill
-          className="object-fill block opacity-100"
+          className="absolute inset-0 w-full h-full object-fill block"
           draggable={false}
-          unoptimized
+          crossOrigin="anonymous"
         />
       ) : (
         <div className="absolute inset-0 bg-muted/20 flex flex-col items-center justify-center text-muted-foreground font-bold text-sm h-full p-4 text-center">
@@ -166,7 +222,9 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
             top: `${config.numberY}%`,
             color: config.color,
             fontSize: fontSize,
-            textShadow: '0 0 3px white, 0 0 6px white, 1px 1px 0 white, -1px -1px 0 white'
+            textShadow: config.color === "#FFFFFF" 
+              ? '0 0 3px black, 0 0 6px rgba(0,0,0,0.5)' 
+              : '0 0 3px white, 0 0 6px rgba(255,255,255,0.5)'
           }}
         >
           N° {formattedNumber}
