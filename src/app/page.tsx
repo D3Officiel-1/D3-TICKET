@@ -6,7 +6,7 @@ import { TicketConfig, DEFAULT_CONFIG } from '@/lib/types';
 import { TicketForm } from '@/components/raffle/TicketForm';
 import { TicketPreview } from '@/components/raffle/TicketPreview';
 import { PrintSheet } from '@/components/raffle/PrintSheet';
-import { Ticket, Sparkles, Star, Github } from 'lucide-react';
+import { Ticket, Sparkles, Star } from 'lucide-react';
 
 export default function Home() {
   const [config, setConfig] = useState<TicketConfig>(DEFAULT_CONFIG);
@@ -61,7 +61,8 @@ export default function Home() {
               </span>
             </div>
             
-            <div className="bg-white/50 p-4 sm:p-8 rounded-3xl border-2 border-dashed border-primary/20 flex justify-center items-center min-h-[400px]">
+            {/* Conteneur avec hauteur fixe pour éviter les sauts de mise en page */}
+            <div className="bg-white/50 p-4 sm:p-8 rounded-3xl border-2 border-dashed border-primary/20 flex justify-center items-center h-[450px] overflow-hidden">
               <TicketPreview config={config} number={config.startingNumber} />
             </div>
 
@@ -78,7 +79,7 @@ export default function Home() {
                   <ul className="text-xs space-y-1.5 opacity-90 font-medium">
                     <li className="flex items-center gap-2">✓ Numérotation {config.generationMode === 'sequential' ? 'Séquentielle' : 'Aléatoire'}</li>
                     <li className="flex items-center gap-2">✓ Format haute résolution PDF</li>
-                    <li className="flex items-center gap-2">✓ Layout optimisé économie d'encre</li>
+                    <li className="li-check">✓ Layout optimisé : 12 tickets par page</li>
                   </ul>
                </div>
             </div>
