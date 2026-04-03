@@ -14,6 +14,8 @@ export interface TicketConfig {
   numberSize: number;
   ticketType: TicketType;
   autoContrast?: boolean;
+  numberPrefix?: string;
+  numberSuffix?: string;
 }
 
 export const DEFAULT_CONFIG: TicketConfig = {
@@ -29,4 +31,6 @@ export const DEFAULT_CONFIG: TicketConfig = {
   numberSize: 24,
   ticketType: 'event_vip',
   autoContrast: false,
+  numberPrefix: "",
+  numberSuffix: "",
 };

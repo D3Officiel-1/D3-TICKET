@@ -4,7 +4,6 @@
 import React, { useMemo, useRef, useState, useEffect, useCallback } from 'react';
 import { TicketConfig } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import Image from 'next/image';
 
 interface TicketPreviewProps {
   config: TicketConfig;
@@ -18,7 +17,13 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const formattedNumber = String(number).padStart(5, '0');
+
+  // Formatting logic: Prefix + PaddedNumber + Suffix
+  const displayValue = useMemo(() => {
+    if (number === "") return "";
+    const formattedNum = String(number).padStart(5, '0');
+    return `${config.numberPrefix || ''}${formattedNum}${config.numberSuffix || ''}`;
+  }, [number, config.numberPrefix, config.numberSuffix]);
 
   const imageUrl = isVerso ? config.versoBackgroundImage : config.backgroundImage;
 
@@ -211,7 +216,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
         </div>
       )}
 
-      {!isVerso && number !== "" && (
+      {!isVerso && displayValue !== "" && (
         <div 
           className={cn(
             "absolute transform -translate-x-1/2 -translate-y-1/2 font-bold whitespace-nowrap pointer-events-none select-none z-20",
@@ -227,7 +232,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
               : '0 0 3px white, 0 0 6px rgba(255,255,255,0.5)'
           }}
         >
-          N° {formattedNumber}
+          {displayValue}
         </div>
       )}
 

@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Settings2, Sparkles, Printer, Image as ImageIcon, Palette, Layers, Ticket, Star, History, X, Wand2 } from 'lucide-react';
+import { Settings2, Sparkles, Printer, Image as ImageIcon, Palette, Layers, Ticket, Star, History, X, Wand2, Hash } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 interface TicketFormProps {
@@ -275,6 +275,32 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
               onChange={(e) => updateField('startingNumber', Math.max(0, parseInt(e.target.value) || 0))}
             />
           </div>
+
+          <div className="md:col-span-2 grid grid-cols-2 gap-4 pt-2">
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5">
+                <Hash className="w-3 h-3" /> Préfixe (ex: VIP-)
+              </Label>
+              <Input 
+                value={config.numberPrefix} 
+                onChange={(e) => updateField('numberPrefix', e.target.value)}
+                placeholder="Ex: VIP-"
+                className="font-mono text-xs"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5">
+                <Hash className="w-3 h-3 rotate-12" /> Suffixe (ex: -A)
+              </Label>
+              <Input 
+                value={config.numberSuffix} 
+                onChange={(e) => updateField('numberSuffix', e.target.value)}
+                placeholder="Ex: -2024"
+                className="font-mono text-xs"
+              />
+            </div>
+          </div>
+
           <div className="space-y-2 md:col-span-2">
             <Label>Type de génération</Label>
             <Select 
