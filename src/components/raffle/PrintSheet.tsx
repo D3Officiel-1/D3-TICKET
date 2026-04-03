@@ -44,7 +44,7 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
           width: '100mm',
           height: '70mm',
           paddingY: '8.5mm',
-          paddingX: '5mm'
+          paddingX: '4mm' // Réduit de 5mm à 4mm pour éviter les rognages
         };
       case 'raffle':
       default:
@@ -54,7 +54,7 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
           width: '100mm',
           height: '50mm',
           paddingY: '23.5mm',
-          paddingX: '5mm'
+          paddingX: '4mm' // Réduit de 5mm à 4mm pour éviter les rognages
         };
     }
   }, [config.ticketType]);
@@ -90,7 +90,7 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
                   height: layout.height,
                   boxSizing: 'border-box'
                 }}
-                className="border-[0.2mm] border-dashed border-gray-400 overflow-hidden"
+                className="border-[0.3mm] border-dashed border-gray-500 box-border"
               >
                 <TicketPreview config={config} number={num} isPrintView={true} isVerso={false} />
               </div>
@@ -121,7 +121,7 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
                     height: layout.height,
                     boxSizing: 'border-box'
                   }}
-                  className="border-[0.2mm] border-dashed border-gray-400 overflow-hidden"
+                  className="border-[0.3mm] border-dashed border-gray-500 box-border"
                 >
                   <TicketPreview config={config} number="" isPrintView={true} isVerso={true} />
                 </div>
