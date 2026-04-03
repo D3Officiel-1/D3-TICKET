@@ -3,7 +3,6 @@
 
 import React, { useMemo } from 'react';
 import { TicketConfig } from '@/lib/types';
-import { User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 
@@ -69,14 +68,6 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
             N° {formattedNumber}
            </span>
         </div>
-        {!isPrintView && (
-          <div className="mt-8 flex flex-col items-center gap-1">
-            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">Souche</p>
-            <div className="w-8 h-8 rounded-full flex items-center justify-center bg-primary/10">
-              <User className="w-4 h-4 text-primary" />
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Main Part - Content area is empty to let the background image show through fully */}
