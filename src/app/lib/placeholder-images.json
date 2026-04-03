@@ -12,6 +12,24 @@
       "description": "Un cadeau brillant pour le prix",
       "imageUrl": "https://picsum.photos/seed/gift/400/300",
       "imageHint": "wrapped gift"
+    },
+    {
+      "id": "bg-festive",
+      "description": "Fond festif avec confettis",
+      "imageUrl": "https://picsum.photos/seed/party/800/400",
+      "imageHint": "festive confetti"
+    },
+    {
+      "id": "bg-luxury",
+      "description": "Fond élégant doré",
+      "imageUrl": "https://picsum.photos/seed/gold/800/400",
+      "imageHint": "elegant gold"
+    },
+    {
+      "id": "bg-nature",
+      "description": "Fond nature apaisant",
+      "imageUrl": "https://picsum.photos/seed/nature/800/400",
+      "imageHint": "soft nature"
     }
   ]
 }

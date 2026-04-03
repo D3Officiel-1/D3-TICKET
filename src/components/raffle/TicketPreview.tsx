@@ -5,6 +5,7 @@ import React from 'react';
 import { TicketConfig } from '@/lib/types';
 import { Star, Trophy, Calendar, MapPin, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 
 interface TicketPreviewProps {
   config: TicketConfig;
@@ -25,10 +26,22 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
       )}
       style={{ borderColor: config.color }}
     >
+      {/* Background Image Overlay */}
+      {config.backgroundImage && (
+        <div className="absolute inset-0 opacity-10 pointer-events-none">
+          <Image 
+            src={config.backgroundImage} 
+            alt="Background" 
+            fill 
+            className="object-cover"
+          />
+        </div>
+      )}
+
       {/* Left Stub (Souche) */}
       <div 
         className={cn(
-          "flex flex-col items-center justify-center border-r-2 border-dashed bg-muted/20",
+          "flex flex-col items-center justify-center border-r-2 border-dashed bg-muted/20 relative z-10",
           isPrintView ? "w-16 p-1" : "w-1/4 p-4"
         )} 
         style={{ borderColor: config.color }}
@@ -49,7 +62,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
       </div>
 
       {/* Main Part */}
-      <div className={cn("flex-1 relative", isPrintView ? "p-3" : "p-6")}>
+      <div className={cn("flex-1 relative z-10", isPrintView ? "p-3" : "p-6")}>
         {!isPrintView && (
           <div className="absolute top-2 right-4 flex gap-1 opacity-20">
             <Star className="w-6 h-6 fill-current" style={{ color: config.color }} />
@@ -62,7 +75,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
             <div className="max-w-[70%]">
               <h3 
                 className={cn(
-                  "font-bold font-headline leading-tight truncate", 
+                  "font-bold font-headline leading-tight truncate drop-shadow-sm", 
                   isPrintView ? "text-sm" : "text-2xl"
                 )} 
                 style={{ color: config.color }}
@@ -74,7 +87,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
               </p>
             </div>
             <div className="text-right">
-              <span className={cn("bg-primary text-white rounded-full font-bold", isPrintView ? "px-1.5 py-0.5 text-[9px]" : "px-3 py-1 text-sm")}>
+              <span className={cn("bg-primary text-white rounded-full font-bold shadow-sm", isPrintView ? "px-1.5 py-0.5 text-[9px]" : "px-3 py-1 text-sm")}>
                 {config.price}
               </span>
             </div>
@@ -92,7 +105,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
               </div>
             </div>
             
-            <div className={cn("bg-accent/5 rounded-lg border border-accent/10", isPrintView ? "p-1.5" : "p-3")}>
+            <div className={cn("bg-accent/5 rounded-lg border border-accent/10 backdrop-blur-[1px]", isPrintView ? "p-1.5" : "p-3")}>
               <div className={cn("flex items-center gap-2 mb-0.5 text-accent font-bold uppercase tracking-widest", isPrintView ? "text-[8px]" : "text-xs")}>
                 <Trophy className={cn(isPrintView ? "w-2.5 h-2.5" : "w-3 h-3")} /> Lots
               </div>
@@ -107,7 +120,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
 
           <footer className={cn("flex justify-between items-end border-dashed", isPrintView ? "mt-1 pt-1 border-t" : "mt-4 pt-4 border-t")}>
             <div className="flex items-center gap-1.5">
-               <div className={cn("rounded bg-gray-100 flex items-center justify-center text-gray-400 border border-gray-200", isPrintView ? "w-5 h-5 text-[7px]" : "w-8 h-8 text-[10px]")}>
+               <div className={cn("rounded bg-gray-100/80 flex items-center justify-center text-gray-400 border border-gray-200", isPrintView ? "w-5 h-5 text-[7px]" : "w-8 h-8 text-[10px]")}>
                   L
                </div>
                {!isPrintView && <p className="text-[10px] italic text-muted-foreground">Généré par D3 TOMBOLA</p>}
@@ -115,7 +128,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
             <div className="flex flex-col items-end">
               <p className={cn("text-muted-foreground uppercase tracking-widest font-bold", isPrintView ? "text-[7px]" : "text-[10px]")}>Tirage</p>
               <p 
-                className={cn("font-black tabular-nums tracking-tighter", isPrintView ? "text-lg leading-none" : "text-2xl")} 
+                className={cn("font-black tabular-nums tracking-tighter drop-shadow-sm", isPrintView ? "text-lg leading-none" : "text-2xl")} 
                 style={{ color: config.color }}
               >
                 #{formattedNumber}

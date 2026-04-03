@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Plus, Trash2, Settings2, Sparkles, Printer } from 'lucide-react';
+import { Plus, Trash2, Settings2, Sparkles, Printer, Image as ImageIcon } from 'lucide-react';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 interface TicketFormProps {
   config: TicketConfig;
@@ -33,6 +34,8 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
   const removePrize = (index: number) => {
     updateField('prizes', config.prizes.filter((_, i) => i !== index));
   };
+
+  const backgroundPresets = PlaceHolderImages.filter(img => img.id.startsWith('bg-'));
 
   return (
     <div className="space-y-8 bg-white p-6 rounded-2xl shadow-sm border border-border">
@@ -97,6 +100,42 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
                 placeholder="#000000"
               />
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h2 className="text-xl font-bold flex items-center gap-2 mb-6 text-accent">
+          <ImageIcon className="w-5 h-5" /> Image de fond
+        </h2>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <Button 
+              variant={config.backgroundImage === "" ? "default" : "outline"} 
+              className="text-xs h-16 flex flex-col gap-1"
+              onClick={() => updateField('backgroundImage', "")}
+            >
+              Aucun
+            </Button>
+            {backgroundPresets.map((bg) => (
+              <Button 
+                key={bg.id}
+                variant={config.backgroundImage === bg.imageUrl ? "default" : "outline"}
+                className="text-xs h-16 flex flex-col gap-1 overflow-hidden p-0 relative"
+                onClick={() => updateField('backgroundImage', bg.imageUrl)}
+              >
+                <img src={bg.imageUrl} alt={bg.description} className="absolute inset-0 w-full h-full object-cover opacity-40" />
+                <span className="relative z-10 bg-white/80 px-1 rounded">{bg.description.split(' ')[1]}</span>
+              </Button>
+            ))}
+          </div>
+          <div className="space-y-2">
+            <Label>URL personnalisée</Label>
+            <Input 
+              value={config.backgroundImage} 
+              onChange={(e) => updateField('backgroundImage', e.target.value)}
+              placeholder="https://images.unsplash.com/photo-..."
+            />
           </div>
         </div>
       </div>
