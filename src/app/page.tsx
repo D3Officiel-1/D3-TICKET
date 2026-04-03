@@ -5,7 +5,7 @@ import { TicketConfig, DEFAULT_CONFIG } from '@/lib/types';
 import { TicketForm } from '@/components/raffle/TicketForm';
 import { TicketPreview } from '@/components/raffle/TicketPreview';
 import { PrintSheet } from '@/components/raffle/PrintSheet';
-import { Ticket, Sparkles, Star, MousePointer2, Layers, Repeat, Save } from 'lucide-react';
+import { Ticket, Star, MousePointer2, Layers, Repeat } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -132,28 +132,6 @@ export default function Home() {
                   <Repeat className="w-3 h-3" /> Basculez entre les faces pour prévisualiser
                 </p>
               )}
-            </div>
-
-            <div className="mt-8 bg-accent text-white p-6 rounded-2xl shadow-xl relative overflow-hidden group">
-               <div className="absolute top-0 right-0 p-4 opacity-10 transition-transform group-hover:scale-110">
-                  <Ticket className="w-32 h-32 rotate-12" />
-               </div>
-               <div className="relative z-10">
-                  <h3 className="text-lg font-bold mb-2">Astuces de pro</h3>
-                  <p className="text-white/80 text-sm leading-relaxed mb-4">
-                    Positionnez votre numéro librement. Vos images sont sauvegardées dans votre bibliothèque locale pour plus tard.
-                  </p>
-                  <div className="grid grid-cols-2 gap-4">
-                    <ul className="text-xs space-y-1.5 opacity-90 font-medium">
-                      <li className="flex items-center gap-2">✓ Glisser-déposer le N°</li>
-                      <li className="flex items-center gap-2">✓ Ctrl + / - : Taille</li>
-                    </ul>
-                    <ul className="text-xs space-y-1.5 opacity-90 font-medium">
-                      <li className="flex items-center gap-2">✓ Sauvegarde auto</li>
-                      <li className="flex items-center gap-2">✓ Bibliothèque locale</li>
-                    </ul>
-                  </div>
-               </div>
             </div>
           </div>
         </div>
