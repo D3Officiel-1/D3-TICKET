@@ -7,6 +7,7 @@ export interface TicketConfig {
   backgroundImage?: string;
   numberX: number;
   numberY: number;
+  numberSize: number;
 }
 
 export const DEFAULT_CONFIG: TicketConfig = {
@@ -17,4 +18,5 @@ export const DEFAULT_CONFIG: TicketConfig = {
   backgroundImage: "",
   numberX: 85,
   numberY: 15,
+  numberSize: 24,
 };
