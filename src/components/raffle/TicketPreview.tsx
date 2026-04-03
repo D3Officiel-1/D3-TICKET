@@ -102,6 +102,19 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
     };
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
+  // Style dynamique selon le type de ticket pour l'aperçu
+  const previewStyles = useMemo(() => {
+    if (isPrintView) return {};
+    
+    // On garde un ratio fixe pour l'aperçu basé sur le type
+    const ratio = config.ticketType === 'event' ? 7/10 : 5/10;
+    const width = 600;
+    return {
+      width: `${width}px`,
+      height: `${width * ratio}px`
+    };
+  }, [config.ticketType, isPrintView]);
+
   const fontSize = useMemo(() => {
     const base = config.numberSize || 24;
     return isPrintView ? `${base * 0.75}pt` : `${base}pt`;
@@ -117,27 +130,24 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
           : "shadow-2xl rounded-xl group select-none cursor-move",
         isDragging && "scale-[1.01] transition-transform z-50"
       )}
-      style={{ 
-        width: isPrintView ? '100%' : '650px',
-        // Dans l'aperçu on garde une hauteur min, mais on laisse l'image dicter si possible
-        minHeight: isPrintView ? '100%' : isValidUrl ? 'auto' : '200px'
-      }}
+      style={previewStyles}
       onMouseDown={handleMouseDown}
     >
-      {/* Background Image - Opaque 100% */}
       {isValidUrl && imageUrl ? (
         <Image 
           src={imageUrl} 
           alt={isVerso ? "Verso" : "Recto"} 
-          width={1920}
-          height={1080}
-          className="w-full h-full object-cover block"
+          fill
+          className="object-cover block"
           draggable={false}
           unoptimized
         />
       ) : (
-        <div className="absolute inset-0 bg-muted/20 flex items-center justify-center text-muted-foreground font-bold text-sm h-full">
-          {isVerso ? "Image du Verso" : "Image du Recto"}
+        <div className="absolute inset-0 bg-muted/20 flex flex-col items-center justify-center text-muted-foreground font-bold text-sm h-full p-4 text-center">
+          <p>{isVerso ? "Image du Verso" : "Image du Recto"}</p>
+          <p className="text-[10px] font-normal mt-2 opacity-60">
+            {config.ticketType === 'event' ? "Format Évènement (10x7cm)" : "Format Tombola (10x5cm)"}
+          </p>
         </div>
       )}
 
@@ -153,7 +163,6 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
             top: `${config.numberY}%`,
             color: config.color,
             fontSize: fontSize,
-            // Ombre portée blanche pour garantir la lisibilité sur l'image opaque
             textShadow: '0 0 4px white, 0 0 8px white, 1px 1px 0 white, -1px -1px 0 white'
           }}
         >

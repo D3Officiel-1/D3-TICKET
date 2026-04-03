@@ -1,4 +1,6 @@
 
+export type TicketType = 'event' | 'raffle';
+
 export interface TicketConfig {
   startingNumber: number;
   quantity: number;
@@ -10,6 +12,7 @@ export interface TicketConfig {
   numberX: number;
   numberY: number;
   numberSize: number;
+  ticketType: TicketType;
 }
 
 export const DEFAULT_CONFIG: TicketConfig = {
@@ -23,4 +26,5 @@ export const DEFAULT_CONFIG: TicketConfig = {
   numberX: 85,
   numberY: 15,
   numberSize: 24,
+  ticketType: 'raffle',
 };

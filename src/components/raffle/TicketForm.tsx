@@ -2,13 +2,13 @@
 "use client"
 
 import React from 'react';
-import { TicketConfig } from '@/lib/types';
+import { TicketConfig, TicketType } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Settings2, Sparkles, Printer, Image as ImageIcon, Palette, Layers } from 'lucide-react';
+import { Settings2, Sparkles, Printer, Image as ImageIcon, Palette, Layers, Ticket } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 interface TicketFormProps {
@@ -26,6 +26,34 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
 
   return (
     <div className="space-y-8 bg-white p-6 rounded-2xl shadow-sm border border-border">
+      <div>
+        <h2 className="text-xl font-bold flex items-center gap-2 mb-6 text-accent">
+          <Ticket className="w-5 h-5" /> Type de Ticket
+        </h2>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label>Format du ticket</Label>
+            <Select 
+              value={config.ticketType} 
+              onValueChange={(v: TicketType) => updateField('ticketType', v)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Choisir un format" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="event">Ticket Évènement (10x7cm - 8/page)</SelectItem>
+                <SelectItem value="raffle">Ticket Tombola (10x5cm - 10/page)</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-[11px] text-muted-foreground">
+              {config.ticketType === 'event' 
+                ? "Format large idéal pour les concerts ou soirées. 2 colonnes x 4 lignes." 
+                : "Format classique optimisé pour les tirages au sort. 2 colonnes x 5 lignes."}
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div>
         <h2 className="text-xl font-bold flex items-center gap-2 mb-6 text-accent">
           <Palette className="w-5 h-5" /> Style & Couleurs

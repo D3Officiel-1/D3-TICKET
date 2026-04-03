@@ -26,24 +26,50 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
     return list;
   }, [config.quantity, config.startingNumber, config.generationMode]);
 
-  // Grouper les tickets par page de 4 pour un alignement parfait (Format A4)
-  const TICKETS_PER_PAGE = 4;
+  // Dimensions et mise en page selon le type
+  const layout = useMemo(() => {
+    if (config.ticketType === 'event') {
+      return {
+        ticketsPerPage: 8,
+        cols: 2,
+        width: '100mm',
+        height: '70mm',
+        gap: '0mm'
+      };
+    } else {
+      return {
+        ticketsPerPage: 10,
+        cols: 2,
+        width: '100mm',
+        height: '50mm',
+        gap: '0mm'
+      };
+    }
+  }, [config.ticketType]);
+
   const pages = useMemo(() => {
     const p = [];
-    for (let i = 0; i < tickets.length; i += TICKETS_PER_PAGE) {
-      p.push(tickets.slice(i, i + TICKETS_PER_PAGE));
+    for (let i = 0; i < tickets.length; i += layout.ticketsPerPage) {
+      p.push(tickets.slice(i, i + layout.ticketsPerPage));
     }
     return p;
-  }, [tickets]);
+  }, [tickets, layout.ticketsPerPage]);
 
   return (
     <div className="hidden print:block bg-white w-[210mm] mx-auto">
-      {/* SECTION RECTOS : Toutes les faces avant d'abord */}
+      {/* SECTION RECTOS */}
       <div className="rectos-section">
         {pages.map((pageTickets, pageIdx) => (
-          <div key={`recto-page-${pageIdx}`} className="page-break-after h-[297mm] py-[10mm] px-[10mm] flex flex-col items-center gap-[5mm]">
-            {pageTickets.map((num, i) => (
-              <div key={`recto-${num}`} className="w-[190mm] h-[65mm] border border-gray-100 overflow-hidden">
+          <div 
+            key={`recto-page-${pageIdx}`} 
+            className="page-break-after h-[297mm] w-[210mm] flex flex-wrap content-start items-start justify-center py-[5mm] px-[5mm]"
+          >
+            {pageTickets.map((num) => (
+              <div 
+                key={`recto-${num}`} 
+                style={{ width: layout.width, height: layout.height }}
+                className="border-[0.1mm] border-gray-100 overflow-hidden"
+              >
                 <TicketPreview config={config} number={num} isPrintView={true} isVerso={false} />
               </div>
             ))}
@@ -51,13 +77,22 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
         ))}
       </div>
 
-      {/* SECTION VERSOS : Toutes les faces arrière en dernier */}
+      {/* SECTION VERSOS */}
       {config.hasVerso && (
         <div className="versos-section">
           {pages.map((pageTickets, pageIdx) => (
-            <div key={`verso-page-${pageIdx}`} className="page-break-after h-[297mm] py-[10mm] px-[10mm] flex flex-col items-center gap-[5mm]">
-              {pageTickets.map((num, i) => (
-                <div key={`verso-${num}`} className="w-[190mm] h-[65mm] border border-gray-100 overflow-hidden">
+            <div 
+              key={`verso-page-${pageIdx}`} 
+              className="page-break-after h-[297mm] w-[210mm] flex flex-wrap content-start items-start justify-center py-[5mm] px-[5mm]"
+            >
+              {/* Note: Pour un alignement parfait au dos, on pourrait devoir inverser l'ordre des colonnes 
+                  mais comme on utilise 2 colonnes identiques (100mm x 2), l'inversion est transparente */}
+              {pageTickets.map((num) => (
+                <div 
+                  key={`verso-${num}`} 
+                  style={{ width: layout.width, height: layout.height }}
+                  className="border-[0.1mm] border-gray-100 overflow-hidden"
+                >
                   <TicketPreview config={config} number="" isPrintView={true} isVerso={true} />
                 </div>
               ))}
