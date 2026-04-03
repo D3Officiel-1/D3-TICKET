@@ -1,18 +1,41 @@
 
 "use client"
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TicketConfig, DEFAULT_CONFIG } from '@/lib/types';
 import { TicketForm } from '@/components/raffle/TicketForm';
 import { TicketPreview } from '@/components/raffle/TicketPreview';
 import { PrintSheet } from '@/components/raffle/PrintSheet';
-import { Ticket, Sparkles, Star, MousePointer2, Layers, Repeat } from 'lucide-react';
+import { Ticket, Sparkles, Star, MousePointer2, Layers, Repeat, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+const STORAGE_KEY = 'd3_tombola_config';
 
 export default function Home() {
   const [config, setConfig] = useState<TicketConfig>(DEFAULT_CONFIG);
   const [activeFace, setActiveFace] = useState<'recto' | 'verso'>('recto');
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Load config from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        setConfig(JSON.parse(saved));
+      } catch (e) {
+        console.error("Erreur de chargement de la config locale", e);
+      }
+    }
+    setIsLoaded(true);
+  }, []);
+
+  // Save config to localStorage on every change
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+    }
+  }, [config, isLoaded]);
 
   const handlePrint = () => {
     window.print();
@@ -23,6 +46,8 @@ export default function Home() {
     setConfig(prev => ({ ...prev, hasVerso: newHasVerso }));
     if (!newHasVerso) setActiveFace('recto');
   };
+
+  if (!isLoaded) return null;
 
   return (
     <main className="min-h-screen pb-20">
@@ -39,6 +64,10 @@ export default function Home() {
             </div>
           </div>
           <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2 text-green-600 bg-green-50 px-3 py-1 rounded-full text-xs font-bold border border-green-100">
+               <Save className="w-3 h-3" />
+               <span>Sauvegarde auto active</span>
+            </div>
             <div className="hidden sm:flex items-center gap-2 text-primary font-bold">
                <Sparkles className="w-5 h-5" />
                <span>100% Gratuit</span>
@@ -90,7 +119,7 @@ export default function Home() {
             <div className="bg-white/50 p-4 sm:p-8 rounded-3xl border-2 border-dashed border-primary/20 flex flex-col gap-4 justify-center items-center min-h-[450px] overflow-hidden relative">
               <div className="absolute top-4 left-4 flex flex-col gap-1 z-20">
                 <span className="text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 px-2 py-1 rounded-md">
-                  Mode: {activeFace === 'recto' ? 'Recto (Face)' : 'Verso (Dos)'}
+                  Mode: {activeFace === 'recto' ? 'Recto' : 'Verso'}
                 </span>
                 {activeFace === 'recto' && (
                   <div className="flex items-center gap-2 text-[10px] bg-accent/10 text-accent px-2 py-1 rounded-md font-bold">
@@ -121,9 +150,9 @@ export default function Home() {
                   <Ticket className="w-32 h-32 rotate-12" />
                </div>
                <div className="relative z-10">
-                  <h3 className="text-lg font-bold mb-2">Guide d'utilisation</h3>
+                  <h3 className="text-lg font-bold mb-2">Astuces de pro</h3>
                   <p className="text-white/80 text-sm leading-relaxed mb-4">
-                    Positionnez votre numéro librement au <b>Recto</b>. Le <b>Verso</b> est idéal pour vos mentions légales ou la liste des lots.
+                    Positionnez votre numéro librement. Vos images sont sauvegardées dans votre bibliothèque locale pour plus tard.
                   </p>
                   <div className="grid grid-cols-2 gap-4">
                     <ul className="text-xs space-y-1.5 opacity-90 font-medium">
@@ -131,8 +160,8 @@ export default function Home() {
                       <li className="flex items-center gap-2">✓ Ctrl + / - : Taille</li>
                     </ul>
                     <ul className="text-xs space-y-1.5 opacity-90 font-medium">
-                      <li className="flex items-center gap-2">✓ Impression groupée</li>
-                      <li className="flex items-center gap-2">✓ Gestion multi-faces</li>
+                      <li className="flex items-center gap-2">✓ Sauvegarde auto</li>
+                      <li className="flex items-center gap-2">✓ Bibliothèque locale</li>
                     </ul>
                   </div>
                </div>
@@ -147,7 +176,7 @@ export default function Home() {
       {/* Footer (Non-printable) */}
       <footer className="no-print mt-20 pt-10 border-t text-center text-muted-foreground px-4">
         <div className="max-w-6xl mx-auto">
-          <p className="text-sm font-medium">© 2024 D3 TOMBOLA — Conçu avec passion pour vos événements.</p>
+          <p className="text-sm font-medium">© 2024 D3 TOMBOLA — Vos données sont stockées localement sur cet ordinateur.</p>
         </div>
       </footer>
     </main>
