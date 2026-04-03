@@ -34,9 +34,6 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
           cols: 1,
           width: '140mm',
           height: '70mm',
-          // Centrage sur A4 (210x297)
-          // 210 - 140 = 70 / 2 = 35mm de marge latérale
-          // 297 - (4*70) = 17 / 2 = 8.5mm de marge haut/bas
           paddingY: '8.5mm',
           paddingX: '35mm'
         };
@@ -46,8 +43,6 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
           cols: 2,
           width: '100mm',
           height: '70mm',
-          // 210 - (2*100) = 10 / 2 = 5mm de marge latérale
-          // 297 - (4*70) = 17 / 2 = 8.5mm de marge haut/bas
           paddingY: '8.5mm',
           paddingX: '5mm'
         };
@@ -58,8 +53,6 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
           cols: 2,
           width: '100mm',
           height: '50mm',
-          // 210 - (2*100) = 10 / 2 = 5mm de marge latérale
-          // 297 - (5*50) = 47 / 2 = 23.5mm de marge haut/bas
           paddingY: '23.5mm',
           paddingX: '5mm'
         };
@@ -82,17 +75,22 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
           <div 
             key={`recto-page-${pageIdx}`} 
             className="page-break-after h-[297mm] w-[210mm] flex flex-wrap content-start items-start justify-center"
-            style={{ paddingTop: layout.paddingY, paddingBottom: layout.paddingY, paddingLeft: layout.paddingX, paddingRight: layout.paddingX }}
+            style={{ 
+              paddingTop: layout.paddingY, 
+              paddingBottom: layout.paddingY, 
+              paddingLeft: layout.paddingX, 
+              paddingRight: layout.paddingX 
+            }}
           >
-            {pageTickets.map((num) => (
+            {pageTickets.map((num, idx) => (
               <div 
-                key={`recto-${num}`} 
+                key={`recto-${num}-${idx}`} 
                 style={{ 
                   width: layout.width, 
                   height: layout.height,
                   boxSizing: 'border-box'
                 }}
-                className="border-[0.1mm] border-dashed border-gray-300 overflow-hidden"
+                className="border-[0.2mm] border-dashed border-gray-400 overflow-hidden"
               >
                 <TicketPreview config={config} number={num} isPrintView={true} isVerso={false} />
               </div>
@@ -108,17 +106,22 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
             <div 
               key={`verso-page-${pageIdx}`} 
               className="page-break-after h-[297mm] w-[210mm] flex flex-wrap content-start items-start justify-center"
-              style={{ paddingTop: layout.paddingY, paddingBottom: layout.paddingY, paddingLeft: layout.paddingX, paddingRight: layout.paddingX }}
+              style={{ 
+                paddingTop: layout.paddingY, 
+                paddingBottom: layout.paddingY, 
+                paddingLeft: layout.paddingX, 
+                paddingRight: layout.paddingX 
+              }}
             >
-              {pageTickets.map((num) => (
+              {pageTickets.map((num, idx) => (
                 <div 
-                  key={`verso-${num}`} 
+                  key={`verso-${pageIdx}-${idx}`} 
                   style={{ 
                     width: layout.width, 
                     height: layout.height,
                     boxSizing: 'border-box'
                   }}
-                  className="border-[0.1mm] border-dashed border-gray-300 overflow-hidden"
+                  className="border-[0.2mm] border-dashed border-gray-400 overflow-hidden"
                 >
                   <TicketPreview config={config} number="" isPrintView={true} isVerso={true} />
                 </div>
