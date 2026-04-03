@@ -1,7 +1,7 @@
 
 "use client"
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { TicketConfig } from '@/lib/types';
 import { Star, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -16,6 +16,23 @@ interface TicketPreviewProps {
 export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, isPrintView = false }) => {
   const formattedNumber = String(number).padStart(5, '0');
 
+  // Simple validation to prevent Next.js Image from crashing on malformed URLs while typing
+  const displayImage = useMemo(() => {
+    if (!config.backgroundImage) return null;
+    
+    // If it's an external URL, check if it's at least potentially valid
+    if (config.backgroundImage.startsWith('http')) {
+      try {
+        new URL(config.backgroundImage);
+        return config.backgroundImage;
+      } catch {
+        return null; // Don't render if it's a malformed URL
+      }
+    }
+    
+    return config.backgroundImage;
+  }, [config.backgroundImage]);
+
   return (
     <div 
       className={cn(
@@ -27,13 +44,14 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
       style={{ borderColor: config.color }}
     >
       {/* Background Image Overlay */}
-      {config.backgroundImage && (
+      {displayImage && (
         <div className="absolute inset-0 opacity-10 pointer-events-none">
           <Image 
-            src={config.backgroundImage} 
+            src={displayImage} 
             alt="Background" 
             fill 
             className="object-cover"
+            unoptimized={!displayImage.includes('picsum.photos') && !displayImage.includes('unsplash.com')}
           />
         </div>
       )}
@@ -69,8 +87,6 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
             <Star className="w-4 h-4 fill-current mt-2" style={{ color: config.color }} />
           </div>
         )}
-        
-        {/* Le contenu central a été supprimé comme demandé */}
       </div>
     </div>
   );
