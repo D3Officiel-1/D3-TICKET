@@ -111,35 +111,33 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
     <div 
       ref={containerRef}
       className={cn(
-        "relative bg-white transition-shadow mx-auto",
+        "relative bg-white overflow-hidden",
         isPrintView 
-          ? "w-full border-2 border-dashed border-gray-300" 
-          : "shadow-xl rounded-xl group select-none overflow-hidden",
-        !isVerso && !isPrintView && "cursor-move",
-        isDragging && "shadow-2xl scale-[1.01] transition-transform"
+          ? "w-full h-full" 
+          : "shadow-2xl rounded-xl group select-none cursor-move",
+        isDragging && "scale-[1.01] transition-transform z-50"
       )}
       style={{ 
         width: isPrintView ? '100%' : '650px',
-        minHeight: !isValidUrl ? '200px' : 'auto'
+        // Dans l'aperçu on garde une hauteur min, mais on laisse l'image dicter si possible
+        minHeight: isPrintView ? '100%' : isValidUrl ? 'auto' : '200px'
       }}
       onMouseDown={handleMouseDown}
     >
-      {/* Background Image - Dynamic Adaptation */}
+      {/* Background Image - Opaque 100% */}
       {isValidUrl && imageUrl ? (
         <Image 
           src={imageUrl} 
           alt={isVerso ? "Verso" : "Recto"} 
-          width={0}
-          height={0}
-          sizes="100vw"
-          className="w-full h-auto block"
+          width={1920}
+          height={1080}
+          className="w-full h-full object-cover block"
           draggable={false}
           unoptimized
         />
       ) : (
-        /* Fallback if no image */
-        <div className="absolute inset-0 bg-muted/20 flex items-center justify-center text-muted-foreground font-bold text-sm min-h-[200px]">
-          {isVerso ? "Image du Verso manquante" : "Ajoutez une image de fond"}
+        <div className="absolute inset-0 bg-muted/20 flex items-center justify-center text-muted-foreground font-bold text-sm h-full">
+          {isVerso ? "Image du Verso" : "Image du Recto"}
         </div>
       )}
 
@@ -155,7 +153,8 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
             top: `${config.numberY}%`,
             color: config.color,
             fontSize: fontSize,
-            textShadow: '2px 2px 0 white, -2px -2px 0 white, 2px -2px 0 white, -2px 2px 0 white, 0 2px 0 white, 0 -2px 0 white, 2px 0 0 white, -2px 0 0 white'
+            // Ombre portée blanche pour garantir la lisibilité sur l'image opaque
+            textShadow: '0 0 4px white, 0 0 8px white, 1px 1px 0 white, -1px -1px 0 white'
           }}
         >
           N° {formattedNumber}

@@ -26,26 +26,45 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
     return list;
   }, [config.quantity, config.startingNumber, config.generationMode]);
 
+  // Grouper les tickets par page de 4 pour un alignement parfait (Format A4)
+  const TICKETS_PER_PAGE = 4;
+  const pages = useMemo(() => {
+    const p = [];
+    for (let i = 0; i < tickets.length; i += TICKETS_PER_PAGE) {
+      p.push(tickets.slice(i, i + TICKETS_PER_PAGE));
+    }
+    return p;
+  }, [tickets]);
+
   return (
-    <div className="hidden print:block bg-white p-0">
-      <div className="grid grid-cols-2 gap-x-4 gap-y-4">
-        {tickets.map((num, i) => (
-          <React.Fragment key={i}>
-            {/* Recto */}
-            <div className="break-inside-avoid">
-              <TicketPreview config={config} number={num} isPrintView={true} />
-            </div>
-            
-            {/* Si verso activé, on peut choisir de l'imprimer immédiatement après ou gérer autrement.
-                Ici, on l'ajoute pour chaque ticket pour une impression recto/verso simplifiée */}
-            {config.hasVerso && (
-              <div className="break-inside-avoid">
-                <TicketPreview config={config} number="" isPrintView={true} isVerso={true} />
+    <div className="hidden print:block bg-white w-[210mm] mx-auto">
+      {/* SECTION RECTOS : Toutes les faces avant d'abord */}
+      <div className="rectos-section">
+        {pages.map((pageTickets, pageIdx) => (
+          <div key={`recto-page-${pageIdx}`} className="page-break-after h-[297mm] py-[10mm] px-[10mm] flex flex-col items-center gap-[5mm]">
+            {pageTickets.map((num, i) => (
+              <div key={`recto-${num}`} className="w-[190mm] h-[65mm] border border-gray-100 overflow-hidden">
+                <TicketPreview config={config} number={num} isPrintView={true} isVerso={false} />
               </div>
-            )}
-          </React.Fragment>
+            ))}
+          </div>
         ))}
       </div>
+
+      {/* SECTION VERSOS : Toutes les faces arrière en dernier */}
+      {config.hasVerso && (
+        <div className="versos-section">
+          {pages.map((pageTickets, pageIdx) => (
+            <div key={`verso-page-${pageIdx}`} className="page-break-after h-[297mm] py-[10mm] px-[10mm] flex flex-col items-center gap-[5mm]">
+              {pageTickets.map((num, i) => (
+                <div key={`verso-${num}`} className="w-[190mm] h-[65mm] border border-gray-100 overflow-hidden">
+                  <TicketPreview config={config} number="" isPrintView={true} isVerso={true} />
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

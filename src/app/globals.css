@@ -38,10 +38,20 @@
 }
 
 @media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
   body {
     background: white !important;
+    margin: 0;
+    padding: 0;
   }
   .no-print {
     display: none !important;
+  }
+  .page-break-after {
+    page-break-after: always;
+    break-after: page;
   }
 }
