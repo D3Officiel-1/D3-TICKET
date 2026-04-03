@@ -6,13 +6,18 @@ import { TicketConfig, DEFAULT_CONFIG } from '@/lib/types';
 import { TicketForm } from '@/components/raffle/TicketForm';
 import { TicketPreview } from '@/components/raffle/TicketPreview';
 import { PrintSheet } from '@/components/raffle/PrintSheet';
-import { Ticket, Sparkles, Star, MousePointer2 } from 'lucide-react';
+import { Ticket, Sparkles, Star, MousePointer2, Layers } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export default function Home() {
   const [config, setConfig] = useState<TicketConfig>(DEFAULT_CONFIG);
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const toggleVerso = () => {
+    setConfig(prev => ({ ...prev, hasVerso: !prev.hasVerso }));
   };
 
   return (
@@ -56,18 +61,43 @@ export default function Home() {
               <h2 className="text-xl font-bold text-accent flex items-center gap-2">
                 <Star className="w-5 h-5 text-primary" /> Aperçu en temps réel
               </h2>
-              <div className="flex items-center gap-2 text-xs bg-primary/10 text-primary px-3 py-1.5 rounded-full font-bold">
-                <MousePointer2 className="w-3 h-3" />
-                Cliquez sur le ticket pour placer le numéro
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant={config.hasVerso ? "default" : "outline"}
+                  size="sm"
+                  onClick={toggleVerso}
+                  className="gap-2 font-bold"
+                >
+                  <Layers className="w-4 h-4" />
+                  {config.hasVerso ? "Verso Activé" : "Ajouter un Verso"}
+                </Button>
+                <div className="hidden sm:flex items-center gap-2 text-xs bg-primary/10 text-primary px-3 py-1.5 rounded-full font-bold">
+                  <MousePointer2 className="w-3 h-3" />
+                  Glissez le numéro pour le placer
+                </div>
               </div>
             </div>
             
-            <div className="bg-white/50 p-4 sm:p-8 rounded-3xl border-2 border-dashed border-primary/20 flex justify-center items-center min-h-[450px] overflow-hidden">
-              <TicketPreview 
-                config={config} 
-                number={config.startingNumber} 
-                onConfigChange={setConfig}
-              />
+            <div className="bg-white/50 p-4 sm:p-8 rounded-3xl border-2 border-dashed border-primary/20 flex flex-col gap-8 justify-center items-center min-h-[450px] overflow-hidden">
+              <div className="space-y-2 w-full flex flex-col items-center">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Recto (Face)</span>
+                <TicketPreview 
+                  config={config} 
+                  number={config.startingNumber} 
+                  onConfigChange={setConfig}
+                />
+              </div>
+
+              {config.hasVerso && (
+                <div className="space-y-2 w-full flex flex-col items-center animate-in fade-in slide-in-from-top-4 duration-500">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Verso (Dos)</span>
+                  <TicketPreview 
+                    config={config} 
+                    number="" 
+                    isVerso={true}
+                  />
+                </div>
+              )}
             </div>
 
             <div className="mt-8 bg-accent text-white p-6 rounded-2xl shadow-xl relative overflow-hidden group">
@@ -77,12 +107,12 @@ export default function Home() {
                <div className="relative z-10">
                   <h3 className="text-lg font-bold mb-2">Instructions de placement</h3>
                   <p className="text-white/80 text-sm leading-relaxed mb-4">
-                    Le numéro n'est plus bloqué à gauche. Déplacez-le librement sur votre image de fond en cliquant simplement là où vous voulez qu'il apparaisse.
+                    Le numéro est totalement mobile. Faites-le glisser sur votre image de fond. Utilisez <b>Ctrl +</b> et <b>Ctrl -</b> pour changer sa taille.
                   </p>
                   <ul className="text-xs space-y-1.5 opacity-90 font-medium">
-                    <li className="flex items-center gap-2">✓ Positionnement libre par clic</li>
-                    <li className="flex items-center gap-2">✓ Rendu identique à l'impression</li>
-                    <li className="flex items-center gap-2">✓ Lisibilité garantie avec effet de contour</li>
+                    <li className="flex items-center gap-2">✓ Glisser-déposer fluide</li>
+                    <li className="flex items-center gap-2">✓ Taille ajustable (Raccourcis clavier)</li>
+                    <li className="flex items-center gap-2">✓ Gestion du Verso pour les règlements/lots</li>
                   </ul>
                </div>
             </div>

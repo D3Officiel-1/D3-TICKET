@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Settings2, Sparkles, Printer, Image as ImageIcon, Palette } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Settings2, Sparkles, Printer, Image as ImageIcon, Palette, Layers } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 interface TicketFormProps {
@@ -31,7 +32,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
         </h2>
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label>Couleur du thème</Label>
+            <Label>Couleur du numéro</Label>
             <div className="flex gap-2">
                <Input 
                 type="color"
@@ -51,7 +52,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
 
       <div>
         <h2 className="text-xl font-bold flex items-center gap-2 mb-6 text-accent">
-          <ImageIcon className="w-5 h-5" /> Image de fond
+          <ImageIcon className="w-5 h-5" /> Image de fond (Recto)
         </h2>
         <div className="space-y-4">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -75,14 +76,40 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
             ))}
           </div>
           <div className="space-y-2">
-            <Label>URL personnalisée</Label>
+            <Label>URL personnalisée Recto</Label>
             <Input 
               value={config.backgroundImage} 
               onChange={(e) => updateField('backgroundImage', e.target.value)}
-              placeholder="https://images.unsplash.com/photo-..."
+              placeholder="https://votre-image.jpg"
             />
           </div>
         </div>
+      </div>
+
+      <div className="p-4 bg-muted/30 rounded-xl border border-dashed">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold flex items-center gap-2 text-accent">
+            <Layers className="w-5 h-5" /> Verso (Optionnel)
+          </h2>
+          <Switch 
+            checked={config.hasVerso} 
+            onCheckedChange={(val) => updateField('hasVerso', val)}
+          />
+        </div>
+        
+        {config.hasVerso && (
+          <div className="space-y-4 animate-in fade-in duration-300">
+            <div className="space-y-2">
+              <Label>Image du Verso (URL)</Label>
+              <Input 
+                value={config.versoBackgroundImage} 
+                onChange={(e) => updateField('versoBackgroundImage', e.target.value)}
+                placeholder="https://votre-image-dos.jpg"
+              />
+              <p className="text-[10px] text-muted-foreground italic">Le verso sera imprimé après chaque recto.</p>
+            </div>
+          </div>
+        )}
       </div>
 
       <div>
