@@ -62,16 +62,6 @@ export default function Home() {
               <p className="text-sm text-muted-foreground font-medium">Génération de tickets professionnels</p>
             </div>
           </div>
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2 text-green-600 bg-green-50 px-3 py-1 rounded-full text-xs font-bold border border-green-100">
-               <Save className="w-3 h-3" />
-               <span>Sauvegarde auto active</span>
-            </div>
-            <div className="hidden sm:flex items-center gap-2 text-primary font-bold">
-               <Sparkles className="w-5 h-5" />
-               <span>100% Gratuit</span>
-            </div>
-          </div>
         </div>
       </header>
 
