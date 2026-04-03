@@ -46,14 +46,6 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <Label>Titre de l'événement</Label>
-            <Input 
-              value={config.title} 
-              onChange={(e) => updateField('title', e.target.value)}
-              placeholder="Ex: Grande Tombola d'Hiver"
-            />
-          </div>
-          <div className="space-y-2">
             <Label>Organisateur</Label>
             <Input 
               value={config.organizer} 
