@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Settings2, Sparkles, Printer, Image as ImageIcon, Palette, Layers, Ticket } from 'lucide-react';
+import { Settings2, Sparkles, Printer, Image as ImageIcon, Palette, Layers, Ticket, Star } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 interface TicketFormProps {
@@ -37,19 +37,27 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
               value={config.ticketType} 
               onValueChange={(v: TicketType) => updateField('ticketType', v)}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full h-12 font-bold">
                 <SelectValue placeholder="Choisir un format" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="event">Ticket Évènement (10x7cm - 8/page)</SelectItem>
-                <SelectItem value="raffle">Ticket Tombola (10x5cm - 10/page)</SelectItem>
+                <SelectItem value="event_vip">
+                  <div className="flex items-center gap-2">
+                    <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                    <span>Événement Standard VIP (14x7cm - 4/page)</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="event">Événement Petit (10x7cm - 8/page)</SelectItem>
+                <SelectItem value="raffle">Tombola Classique (10x5cm - 10/page)</SelectItem>
               </SelectContent>
             </Select>
-            <p className="text-[11px] text-muted-foreground">
-              {config.ticketType === 'event' 
-                ? "Format large idéal pour les concerts ou soirées. 2 colonnes x 4 lignes." 
-                : "Format classique optimisé pour les tirages au sort. 2 colonnes x 5 lignes."}
-            </p>
+            <div className="p-3 bg-primary/5 rounded-lg border border-primary/10 mt-2">
+              <p className="text-[12px] text-primary font-medium leading-tight">
+                {config.ticketType === 'event_vip' && "Le meilleur choix : Format VIP large, idéal pour les festivals et concerts. 4 tickets par page."}
+                {config.ticketType === 'event' && "Format compact 10x7cm. Idéal pour optimiser le papier avec 8 tickets par page."}
+                {config.ticketType === 'raffle' && "Format standard tombola 10x5cm. 10 tickets par page."}
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -64,7 +72,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
             <div className="flex gap-2">
                <Input 
                 type="color"
-                className="w-12 p-1 cursor-pointer"
+                className="w-12 p-1 cursor-pointer h-10"
                 value={config.color} 
                 onChange={(e) => updateField('color', e.target.value)}
               />
@@ -72,6 +80,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
                 value={config.color} 
                 onChange={(e) => updateField('color', e.target.value)}
                 placeholder="#000000"
+                className="font-mono"
               />
             </div>
           </div>
@@ -83,6 +92,16 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
           <ImageIcon className="w-5 h-5" /> Image de fond (Recto)
         </h2>
         <div className="space-y-4">
+          <div className="space-y-2">
+            <Label>URL de l'image (votre design complet)</Label>
+            <Input 
+              value={config.backgroundImage} 
+              onChange={(e) => updateField('backgroundImage', e.target.value)}
+              placeholder="https://votre-image.jpg"
+              className="bg-muted/30"
+            />
+            <p className="text-[11px] text-muted-foreground">Collez l'URL de votre image incluant déjà vos textes (titre, prix, etc.).</p>
+          </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <Button 
               variant={config.backgroundImage === "" ? "default" : "outline"} 
@@ -99,26 +118,21 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
                 onClick={() => updateField('backgroundImage', bg.imageUrl)}
               >
                 <img src={bg.imageUrl} alt={bg.description} className="absolute inset-0 w-full h-full object-cover opacity-40" />
-                <span className="relative z-10 bg-white/80 px-1 rounded">{bg.description.split(' ')[1]}</span>
+                <span className="relative z-10 bg-white/80 px-1 rounded font-bold">{bg.description.split(' ')[1]}</span>
               </Button>
             ))}
-          </div>
-          <div className="space-y-2">
-            <Label>URL personnalisée Recto</Label>
-            <Input 
-              value={config.backgroundImage} 
-              onChange={(e) => updateField('backgroundImage', e.target.value)}
-              placeholder="https://votre-image.jpg"
-            />
           </div>
         </div>
       </div>
 
-      <div className="p-4 bg-muted/30 rounded-xl border border-dashed">
+      <div className="p-4 bg-muted/30 rounded-xl border border-dashed border-accent/20">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold flex items-center gap-2 text-accent">
-            <Layers className="w-5 h-5" /> Verso (Optionnel)
-          </h2>
+          <div className="flex flex-col">
+            <h2 className="text-lg font-bold flex items-center gap-2 text-accent">
+              <Layers className="w-5 h-5" /> Verso (Optionnel)
+            </h2>
+            <p className="text-[10px] text-muted-foreground">Imprimé au dos de chaque ticket</p>
+          </div>
           <Switch 
             checked={config.hasVerso} 
             onCheckedChange={(val) => updateField('hasVerso', val)}
@@ -126,15 +140,15 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
         </div>
         
         {config.hasVerso && (
-          <div className="space-y-4 animate-in fade-in duration-300">
+          <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
             <div className="space-y-2">
               <Label>Image du Verso (URL)</Label>
               <Input 
                 value={config.versoBackgroundImage} 
                 onChange={(e) => updateField('versoBackgroundImage', e.target.value)}
                 placeholder="https://votre-image-dos.jpg"
+                className="bg-white"
               />
-              <p className="text-[10px] text-muted-foreground italic">Le verso sera imprimé après chaque recto.</p>
             </div>
           </div>
         )}
@@ -146,11 +160,11 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <Label>Nombre de tickets</Label>
+            <Label>Nombre total de tickets</Label>
             <Input 
               type="number"
               value={config.quantity} 
-              onChange={(e) => updateField('quantity', parseInt(e.target.value) || 1)}
+              onChange={(e) => updateField('quantity', Math.max(1, parseInt(e.target.value) || 1))}
             />
           </div>
           <div className="space-y-2">
@@ -158,11 +172,11 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
             <Input 
               type="number"
               value={config.startingNumber} 
-              onChange={(e) => updateField('startingNumber', parseInt(e.target.value) || 1)}
+              onChange={(e) => updateField('startingNumber', Math.max(0, parseInt(e.target.value) || 0))}
             />
           </div>
           <div className="space-y-2 md:col-span-2">
-            <Label>Mode de numérotation</Label>
+            <Label>Type de numérotation</Label>
             <Select 
               value={config.generationMode} 
               onValueChange={(v) => updateField('generationMode', v)}
@@ -171,8 +185,8 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="sequential">Séquentiel (1, 2, 3...)</SelectItem>
-                <SelectItem value="random">Aléatoire (Uniques)</SelectItem>
+                <SelectItem value="sequential">Séquentiel (001, 002, 003...)</SelectItem>
+                <SelectItem value="random">Aléatoire (Codes uniques)</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -180,8 +194,8 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
       </div>
 
       <div className="pt-4 border-t">
-        <Button onClick={onPrint} className="w-full bg-primary hover:bg-primary/90 text-white h-12 text-lg shadow-md">
-          <Printer className="w-5 h-5 mr-2" /> Générer & Imprimer en PDF
+        <Button onClick={onPrint} className="w-full bg-primary hover:bg-primary/90 text-white h-14 text-xl shadow-xl hover:scale-[1.02] transition-transform">
+          <Printer className="w-6 h-6 mr-3" /> Générer le PDF Prêt à Imprimer
         </Button>
       </div>
     </div>

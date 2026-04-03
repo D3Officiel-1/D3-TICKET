@@ -26,24 +26,30 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
     return list;
   }, [config.quantity, config.startingNumber, config.generationMode]);
 
-  // Dimensions et mise en page selon le type
   const layout = useMemo(() => {
-    if (config.ticketType === 'event') {
-      return {
-        ticketsPerPage: 8,
-        cols: 2,
-        width: '100mm',
-        height: '70mm',
-        gap: '0mm'
-      };
-    } else {
-      return {
-        ticketsPerPage: 10,
-        cols: 2,
-        width: '100mm',
-        height: '50mm',
-        gap: '0mm'
-      };
+    switch (config.ticketType) {
+      case 'event_vip':
+        return {
+          ticketsPerPage: 4,
+          cols: 1,
+          width: '140mm',
+          height: '70mm',
+        };
+      case 'event':
+        return {
+          ticketsPerPage: 8,
+          cols: 2,
+          width: '100mm',
+          height: '70mm',
+        };
+      case 'raffle':
+      default:
+        return {
+          ticketsPerPage: 10,
+          cols: 2,
+          width: '100mm',
+          height: '50mm',
+        };
     }
   }, [config.ticketType]);
 
@@ -57,12 +63,12 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
 
   return (
     <div className="hidden print:block bg-white w-[210mm] mx-auto">
-      {/* SECTION RECTOS */}
+      {/* SECTION RECTOS : Toutes les pages de devant d'abord */}
       <div className="rectos-section">
         {pages.map((pageTickets, pageIdx) => (
           <div 
             key={`recto-page-${pageIdx}`} 
-            className="page-break-after h-[297mm] w-[210mm] flex flex-wrap content-start items-start justify-center py-[5mm] px-[5mm]"
+            className="page-break-after h-[297mm] w-[210mm] flex flex-wrap content-start items-start justify-center py-[8mm] px-[5mm] gap-0"
           >
             {pageTickets.map((num) => (
               <div 
@@ -77,16 +83,14 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
         ))}
       </div>
 
-      {/* SECTION VERSOS */}
+      {/* SECTION VERSOS : Toutes les pages de dos ensuite pour ré-insertion facile dans l'imprimante */}
       {config.hasVerso && (
         <div className="versos-section">
           {pages.map((pageTickets, pageIdx) => (
             <div 
               key={`verso-page-${pageIdx}`} 
-              className="page-break-after h-[297mm] w-[210mm] flex flex-wrap content-start items-start justify-center py-[5mm] px-[5mm]"
+              className="page-break-after h-[297mm] w-[210mm] flex flex-wrap content-start items-start justify-center py-[8mm] px-[5mm] gap-0"
             >
-              {/* Note: Pour un alignement parfait au dos, on pourrait devoir inverser l'ordre des colonnes 
-                  mais comme on utilise 2 colonnes identiques (100mm x 2), l'inversion est transparente */}
               {pageTickets.map((num) => (
                 <div 
                   key={`verso-${num}`} 

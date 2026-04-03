@@ -72,9 +72,9 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
           let newSize = currentSize;
 
           if (e.key === '+' || e.key === '=') {
-            newSize = Math.min(120, currentSize + step);
+            newSize = Math.min(150, currentSize + step);
           } else if (e.key === '-') {
-            newSize = Math.max(8, currentSize - step);
+            newSize = Math.max(6, currentSize - step);
           }
 
           if (newSize !== currentSize) {
@@ -102,13 +102,15 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
     };
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
-  // Style dynamique selon le type de ticket pour l'aperçu
   const previewStyles = useMemo(() => {
     if (isPrintView) return {};
     
-    // On garde un ratio fixe pour l'aperçu basé sur le type
-    const ratio = config.ticketType === 'event' ? 7/10 : 5/10;
-    const width = 600;
+    // Ratios d'aspect basés sur les dimensions physiques
+    let ratio = 5/10; // Tombola par défaut
+    if (config.ticketType === 'event_vip') ratio = 7/14; // 0.5 aussi mais largeur différente
+    if (config.ticketType === 'event') ratio = 7/10; // 0.7
+
+    const width = config.ticketType === 'event_vip' ? 650 : 600;
     return {
       width: `${width}px`,
       height: `${width * ratio}px`
@@ -117,7 +119,6 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
 
   const fontSize = useMemo(() => {
     const base = config.numberSize || 24;
-    // On ajuste la taille du texte pour l'impression (pt vs px)
     return isPrintView ? `${base * 0.75}pt` : `${base}pt`;
   }, [config.numberSize, isPrintView]);
 
@@ -129,7 +130,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
         isPrintView 
           ? "w-full h-full" 
           : "shadow-2xl rounded-xl group select-none cursor-move",
-        isDragging && "scale-[1.01] transition-transform z-50"
+        isDragging && "scale-[1.01] transition-transform z-50 ring-4 ring-primary/30"
       )}
       style={previewStyles}
       onMouseDown={handleMouseDown}
@@ -139,24 +140,25 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
           src={imageUrl} 
           alt={isVerso ? "Verso" : "Recto"} 
           fill
-          className="object-fill block"
+          className="object-fill block opacity-100"
           draggable={false}
           unoptimized
         />
       ) : (
         <div className="absolute inset-0 bg-muted/20 flex flex-col items-center justify-center text-muted-foreground font-bold text-sm h-full p-4 text-center">
-          <p>{isVerso ? "Image du Verso" : "Image du Recto"}</p>
+          <p>{isVerso ? "Design du Verso" : "Design du Recto"}</p>
           <p className="text-[10px] font-normal mt-2 opacity-60">
-            {config.ticketType === 'event' ? "Format Évènement (10x7cm)" : "Format Tombola (10x5cm)"}
+            {config.ticketType === 'event_vip' && "Format VIP (14x7cm)"}
+            {config.ticketType === 'event' && "Format Évènement (10x7cm)"}
+            {config.ticketType === 'raffle' && "Format Tombola (10x5cm)"}
           </p>
         </div>
       )}
 
-      {/* Floating Number (Only on Recto) */}
       {!isVerso && number !== "" && (
         <div 
           className={cn(
-            "absolute transform -translate-x-1/2 -translate-y-1/2 font-bold whitespace-nowrap pointer-events-none select-none",
+            "absolute transform -translate-x-1/2 -translate-y-1/2 font-bold whitespace-nowrap pointer-events-none select-none z-20",
             isDragging && "opacity-80"
           )}
           style={{ 
@@ -164,21 +166,20 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
             top: `${config.numberY}%`,
             color: config.color,
             fontSize: fontSize,
-            textShadow: '0 0 4px white, 0 0 8px white, 1px 1px 0 white, -1px -1px 0 white'
+            textShadow: '0 0 3px white, 0 0 6px white, 1px 1px 0 white, -1px -1px 0 white'
           }}
         >
           N° {formattedNumber}
         </div>
       )}
 
-      {/* Interactive Hint */}
       {!isPrintView && !isVerso && !isDragging && (
         <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity pointer-events-none">
           <div className="flex flex-col items-center gap-2">
-            <span className="bg-white/90 text-accent px-4 py-2 rounded-full font-bold shadow-lg border border-accent/20">
+            <span className="bg-white/95 text-accent px-4 py-2 rounded-full font-bold shadow-lg border border-accent/20">
               Glissez pour placer le numéro
             </span>
-            <span className="bg-primary/90 text-white text-[10px] px-3 py-1 rounded-full font-bold shadow-md">
+            <span className="bg-primary/95 text-white text-[11px] px-3 py-1 rounded-full font-bold shadow-md">
               Ctrl + / - pour la taille
             </span>
           </div>
