@@ -43,7 +43,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
       )}
       style={{ borderColor: config.color }}
     >
-      {/* Background Image Overlay - Full opacity as requested */}
+      {/* Background Image Overlay - 100% opacity as requested */}
       {displayImage && (
         <div className="absolute inset-0 opacity-100 pointer-events-none">
           <Image 
@@ -56,10 +56,10 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
         </div>
       )}
 
-      {/* Left Stub (Souche) - Semi-transparent background to remain readable over the image */}
+      {/* Left Stub (Souche) - Ensures full height with white backdrop for readability */}
       <div 
         className={cn(
-          "flex flex-col items-center justify-center border-r-2 border-dashed bg-white/80 backdrop-blur-sm relative z-10",
+          "flex flex-col items-center justify-center border-r-2 border-dashed bg-white/80 backdrop-blur-sm relative z-10 h-full",
           isPrintView ? "w-16 p-1" : "w-1/4 p-4"
         )} 
         style={{ borderColor: config.color }}
@@ -79,8 +79,8 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
         )}
       </div>
 
-      {/* Main Part - Content area is empty to let the background image (which contains details) show through */}
-      <div className={cn("flex-1 relative z-10", isPrintView ? "p-3" : "p-6")}>
+      {/* Main Part - Content area is empty to let the background image show through fully */}
+      <div className={cn("flex-1 relative z-10 h-full", isPrintView ? "p-3" : "p-6")}>
         {/* L'image de fond contient déjà tous les textes et détails */}
       </div>
     </div>
