@@ -120,23 +120,25 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
       )}
       style={{ 
         width: isPrintView ? '100%' : '650px',
-        aspectRatio: '650/200' 
+        minHeight: !isValidUrl ? '200px' : 'auto'
       }}
       onMouseDown={handleMouseDown}
     >
-      {/* Background Image */}
+      {/* Background Image - Dynamic Adaptation */}
       {isValidUrl && imageUrl ? (
         <Image 
           src={imageUrl} 
           alt={isVerso ? "Verso" : "Recto"} 
-          fill
-          className="object-cover"
+          width={0}
+          height={0}
+          sizes="100vw"
+          className="w-full h-auto block"
           draggable={false}
           unoptimized
         />
       ) : (
         /* Fallback if no image */
-        <div className="absolute inset-0 bg-muted/20 flex items-center justify-center text-muted-foreground font-bold text-sm">
+        <div className="absolute inset-0 bg-muted/20 flex items-center justify-center text-muted-foreground font-bold text-sm min-h-[200px]">
           {isVerso ? "Image du Verso manquante" : "Ajoutez une image de fond"}
         </div>
       )}
