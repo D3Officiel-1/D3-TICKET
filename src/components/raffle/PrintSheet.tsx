@@ -44,7 +44,7 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
           width: '100mm',
           height: '70mm',
           paddingY: '8.5mm',
-          paddingX: '4mm' // Réduit de 5mm à 4mm pour éviter les rognages
+          paddingX: '5mm' 
         };
       case 'raffle':
       default:
@@ -54,7 +54,7 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
           width: '100mm',
           height: '50mm',
           paddingY: '23.5mm',
-          paddingX: '4mm' // Réduit de 5mm à 4mm pour éviter les rognages
+          paddingX: '5mm' 
         };
     }
   }, [config.ticketType]);
@@ -74,12 +74,14 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
         {pages.map((pageTickets, pageIdx) => (
           <div 
             key={`recto-page-${pageIdx}`} 
-            className="page-break-after h-[297mm] w-[210mm] flex flex-wrap content-start items-start justify-center"
+            className="page-break-after h-[297mm] w-[210mm] grid content-start"
             style={{ 
               paddingTop: layout.paddingY, 
               paddingBottom: layout.paddingY, 
               paddingLeft: layout.paddingX, 
-              paddingRight: layout.paddingX 
+              paddingRight: layout.paddingX,
+              gridTemplateColumns: `repeat(${layout.cols}, ${layout.width})`,
+              gridAutoRows: layout.height
             }}
           >
             {pageTickets.map((num, idx) => (
@@ -90,7 +92,7 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
                   height: layout.height,
                   boxSizing: 'border-box'
                 }}
-                className="border-[0.3mm] border-dashed border-gray-500 box-border"
+                className="border-[0.3mm] border-dashed border-gray-400 box-border overflow-hidden"
               >
                 <TicketPreview config={config} number={num} isPrintView={true} isVerso={false} />
               </div>
@@ -105,15 +107,17 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
           {pages.map((pageTickets, pageIdx) => (
             <div 
               key={`verso-page-${pageIdx}`} 
-              className="page-break-after h-[297mm] w-[210mm] flex flex-wrap content-start items-start justify-center"
+              className="page-break-after h-[297mm] w-[210mm] grid content-start"
               style={{ 
                 paddingTop: layout.paddingY, 
                 paddingBottom: layout.paddingY, 
                 paddingLeft: layout.paddingX, 
-                paddingRight: layout.paddingX 
+                paddingRight: layout.paddingX,
+                gridTemplateColumns: `repeat(${layout.cols}, ${layout.width})`,
+                gridAutoRows: layout.height
               }}
             >
-              {pageTickets.map((num, idx) => (
+              {pageTickets.map((_, idx) => (
                 <div 
                   key={`verso-${pageIdx}-${idx}`} 
                   style={{ 
@@ -121,7 +125,7 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
                     height: layout.height,
                     boxSizing: 'border-box'
                   }}
-                  className="border-[0.3mm] border-dashed border-gray-500 box-border"
+                  className="border-[0.3mm] border-dashed border-gray-400 box-border overflow-hidden"
                 >
                   <TicketPreview config={config} number="" isPrintView={true} isVerso={true} />
                 </div>
