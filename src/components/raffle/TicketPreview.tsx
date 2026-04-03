@@ -3,7 +3,7 @@
 
 import React, { useMemo } from 'react';
 import { TicketConfig } from '@/lib/types';
-import { Star, User } from 'lucide-react';
+import { User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 
@@ -43,9 +43,9 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
       )}
       style={{ borderColor: config.color }}
     >
-      {/* Background Image Overlay */}
+      {/* Background Image Overlay - Set to 100% opacity as requested */}
       {displayImage && (
-        <div className="absolute inset-0 opacity-10 pointer-events-none">
+        <div className="absolute inset-0 opacity-100 pointer-events-none">
           <Image 
             src={displayImage} 
             alt="Background" 
@@ -56,10 +56,10 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
         </div>
       )}
 
-      {/* Left Stub (Souche) */}
+      {/* Left Stub (Souche) - Semi-transparent background to remain readable over the image */}
       <div 
         className={cn(
-          "flex flex-col items-center justify-center border-r-2 border-dashed bg-muted/20 relative z-10",
+          "flex flex-col items-center justify-center border-r-2 border-dashed bg-white/80 backdrop-blur-sm relative z-10",
           isPrintView ? "w-16 p-1" : "w-1/4 p-4"
         )} 
         style={{ borderColor: config.color }}
@@ -79,14 +79,9 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
         )}
       </div>
 
-      {/* Main Part - Content removed as requested */}
+      {/* Main Part - Content area is now empty to let the background image (which contains details) show through */}
       <div className={cn("flex-1 relative z-10", isPrintView ? "p-3" : "p-6")}>
-        {!isPrintView && (
-          <div className="absolute top-2 right-4 flex gap-1 opacity-20">
-            <Star className="w-6 h-6 fill-current" style={{ color: config.color }} />
-            <Star className="w-4 h-4 fill-current mt-2" style={{ color: config.color }} />
-          </div>
-        )}
+        {/* Empty area where the background image with its details will be displayed */}
       </div>
     </div>
   );
