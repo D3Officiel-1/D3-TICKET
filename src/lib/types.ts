@@ -1,6 +1,5 @@
 
 export interface TicketConfig {
-  title: string;
   organizer: string;
   date: string;
   location: string;
@@ -14,7 +13,6 @@ export interface TicketConfig {
 }
 
 export const DEFAULT_CONFIG: TicketConfig = {
-  title: "Grande Tombola Annuelle",
   organizer: "Association D3",
   date: "2024-12-25",
   location: "Salle des Fêtes, Paris",

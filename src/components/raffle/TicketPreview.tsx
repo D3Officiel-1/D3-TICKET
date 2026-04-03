@@ -73,17 +73,8 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
         <div className="flex flex-col h-full justify-between">
           <header className="flex justify-between items-start">
             <div className="max-w-[70%]">
-              <h3 
-                className={cn(
-                  "font-bold font-headline leading-tight truncate drop-shadow-sm", 
-                  isPrintView ? "text-sm" : "text-2xl"
-                )} 
-                style={{ color: config.color }}
-              >
-                {config.title}
-              </h3>
-              <p className={cn("font-medium flex items-center gap-1 text-muted-foreground", isPrintView ? "text-[10px]" : "text-sm mt-1")}>
-                <User className="w-3 h-3" /> {config.organizer}
+              <p className={cn("font-bold flex items-center gap-1 text-accent", isPrintView ? "text-xs" : "text-lg")}>
+                <User className="w-4 h-4" /> {config.organizer}
               </p>
             </div>
             <div className="text-right">
