@@ -36,10 +36,10 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
   return (
     <div 
       className={cn(
-        "relative flex w-full bg-white border-2 overflow-hidden transition-all",
+        "relative flex bg-white border-2 overflow-hidden transition-all mx-auto",
         isPrintView 
-          ? "shadow-none border-dashed border-gray-400 h-[4.5cm]" 
-          : "max-w-2xl shadow-lg rounded-xl hover:scale-[1.01]"
+          ? "w-full shadow-none border-dashed border-gray-400 h-[4.5cm]" 
+          : "w-[600px] h-[160px] max-w-full shadow-lg rounded-xl hover:scale-[1.01]"
       )}
       style={{ borderColor: config.color }}
     >
@@ -51,7 +51,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
             alt="Background" 
             fill 
             className="object-cover"
-            unoptimized={!displayImage.includes('picsum.photos') && !displayImage.includes('unsplash.com')}
+            unoptimized={true}
           />
         </div>
       )}
