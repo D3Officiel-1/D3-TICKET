@@ -117,6 +117,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
 
   const fontSize = useMemo(() => {
     const base = config.numberSize || 24;
+    // On ajuste la taille du texte pour l'impression (pt vs px)
     return isPrintView ? `${base * 0.75}pt` : `${base}pt`;
   }, [config.numberSize, isPrintView]);
 
@@ -138,7 +139,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
           src={imageUrl} 
           alt={isVerso ? "Verso" : "Recto"} 
           fill
-          className="object-cover block"
+          className="object-fill block"
           draggable={false}
           unoptimized
         />
