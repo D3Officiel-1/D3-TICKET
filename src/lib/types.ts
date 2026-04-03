@@ -1,10 +1,5 @@
 
 export interface TicketConfig {
-  organizer: string;
-  date: string;
-  location: string;
-  prizes: string[];
-  price: string;
   startingNumber: number;
   quantity: number;
   generationMode: 'sequential' | 'random';
@@ -13,11 +8,6 @@ export interface TicketConfig {
 }
 
 export const DEFAULT_CONFIG: TicketConfig = {
-  organizer: "Association D3",
-  date: "2024-12-25",
-  location: "Salle des Fêtes, Paris",
-  prizes: ["Voyage à Venise", "Téléviseur 4K", "Bon d'achat 100€"],
-  price: "2.00€",
   startingNumber: 1,
   quantity: 50,
   generationMode: 'sequential',
