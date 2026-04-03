@@ -4,7 +4,6 @@
 import React, { useMemo } from 'react';
 import { TicketConfig } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import Image from 'next/image';
 
 interface TicketPreviewProps {
   config: TicketConfig;
@@ -15,17 +14,15 @@ interface TicketPreviewProps {
 export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, isPrintView = false }) => {
   const formattedNumber = String(number).padStart(5, '0');
 
-  // Simple validation to prevent Next.js Image from crashing on malformed URLs while typing
   const displayImage = useMemo(() => {
     if (!config.backgroundImage) return null;
     
-    // If it's an external URL, check if it's at least potentially valid
     if (config.backgroundImage.startsWith('http')) {
       try {
         new URL(config.backgroundImage);
         return config.backgroundImage;
       } catch {
-        return null; // Don't render if it's a malformed URL
+        return null;
       }
     }
     
@@ -37,28 +34,28 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
       className={cn(
         "relative flex bg-white border-2 overflow-hidden transition-all mx-auto",
         isPrintView 
-          ? "w-full shadow-none border-dashed border-gray-400 h-[4.5cm]" 
-          : "w-[650px] h-[200px] max-w-full shadow-lg rounded-xl hover:scale-[1.01]"
+          ? "w-full shadow-none border-dashed border-gray-400" 
+          : "w-[650px] max-w-full shadow-lg rounded-xl hover:scale-[1.01]"
       )}
       style={{ borderColor: config.color }}
     >
-      {/* Background Image Overlay - 100% opacity as requested */}
-      {displayImage && (
-        <div className="absolute inset-0 opacity-100 pointer-events-none">
-          <Image 
-            src={displayImage} 
-            alt="Background" 
-            fill 
-            className="object-cover"
-            unoptimized={true}
-          />
-        </div>
+      {/* Background Image - This now defines the height of the parent div */}
+      {displayImage ? (
+        <img 
+          src={displayImage} 
+          alt="Background" 
+          className="w-full h-auto block"
+          loading="lazy"
+        />
+      ) : (
+        /* Fallback if no image */
+        <div className={cn("w-full bg-muted/20", isPrintView ? "h-[4.5cm]" : "h-[200px]")} />
       )}
 
-      {/* Left Stub (Souche) - Ensures full height with white backdrop for readability */}
+      {/* Left Stub (Souche) - Absolute to stay on top and match height automatically */}
       <div 
         className={cn(
-          "flex flex-col items-center justify-center border-r-2 border-dashed bg-white/80 backdrop-blur-sm relative z-10 h-full",
+          "absolute left-0 top-0 bottom-0 flex flex-col items-center justify-center border-r-2 border-dashed bg-white/80 backdrop-blur-sm z-10",
           isPrintView ? "w-16 p-1" : "w-1/4 p-4"
         )} 
         style={{ borderColor: config.color }}
@@ -68,11 +65,6 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
             N° {formattedNumber}
            </span>
         </div>
-      </div>
-
-      {/* Main Part - Content area is empty to let the background image show through fully */}
-      <div className={cn("flex-1 relative z-10 h-full", isPrintView ? "p-3" : "p-6")}>
-        {/* L'image de fond contient déjà tous les textes et détails */}
       </div>
     </div>
   );

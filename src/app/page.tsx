@@ -61,8 +61,8 @@ export default function Home() {
               </span>
             </div>
             
-            {/* Conteneur avec hauteur fixe pour éviter les sauts de mise en page */}
-            <div className="bg-white/50 p-4 sm:p-8 rounded-3xl border-2 border-dashed border-primary/20 flex justify-center items-center h-[450px] overflow-hidden">
+            {/* Conteneur flexible qui s'adapte à la hauteur du ticket */}
+            <div className="bg-white/50 p-4 sm:p-8 rounded-3xl border-2 border-dashed border-primary/20 flex justify-center items-center min-h-[300px] overflow-hidden">
               <TicketPreview config={config} number={config.startingNumber} />
             </div>
 
