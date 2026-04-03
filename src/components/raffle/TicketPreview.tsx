@@ -9,63 +9,77 @@ interface TicketPreviewProps {
   config: TicketConfig;
   number: string | number;
   isPrintView?: boolean;
+  onConfigChange?: (config: TicketConfig) => void;
 }
 
-export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, isPrintView = false }) => {
+export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, isPrintView = false, onConfigChange }) => {
   const formattedNumber = String(number).padStart(5, '0');
 
   const displayImage = useMemo(() => {
     if (!config.backgroundImage) return null;
-    
-    if (config.backgroundImage.startsWith('http')) {
-      try {
-        new URL(config.backgroundImage);
-        return config.backgroundImage;
-      } catch {
-        return null;
-      }
-    }
-    
     return config.backgroundImage;
   }, [config.backgroundImage]);
+
+  const handleTicketClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (isPrintView || !onConfigChange) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+    onConfigChange({
+      ...config,
+      numberX: Math.max(0, Math.min(100, x)),
+      numberY: Math.max(0, Math.min(100, y))
+    });
+  };
 
   return (
     <div 
       className={cn(
-        "relative flex bg-white border-2 overflow-hidden transition-all mx-auto",
+        "relative inline-block bg-white border-2 overflow-hidden transition-all mx-auto",
         isPrintView 
           ? "w-full shadow-none border-dashed border-gray-400" 
-          : "w-[650px] max-w-full shadow-lg rounded-xl hover:scale-[1.01]"
+          : "shadow-lg rounded-xl cursor-crosshair group"
       )}
       style={{ borderColor: config.color }}
+      onClick={handleTicketClick}
     >
-      {/* Background Image - This now defines the height of the parent div */}
+      {/* Background Image */}
       {displayImage ? (
         <img 
           src={displayImage} 
           alt="Background" 
-          className="w-full h-auto block"
+          className="max-w-full h-auto block"
           loading="lazy"
         />
       ) : (
         /* Fallback if no image */
-        <div className={cn("w-full bg-muted/20", isPrintView ? "h-[4.5cm]" : "h-[200px]")} />
+        <div className={cn("bg-muted/20", isPrintView ? "w-full h-[4.5cm]" : "w-[650px] h-[200px]")} />
       )}
 
-      {/* Left Stub (Souche) - Absolute to stay on top and match height automatically */}
+      {/* Floating Number */}
       <div 
-        className={cn(
-          "absolute left-0 top-0 bottom-0 flex flex-col items-center justify-center border-r-2 border-dashed bg-white/80 backdrop-blur-sm z-10",
-          isPrintView ? "w-16 p-1" : "w-1/4 p-4"
-        )} 
-        style={{ borderColor: config.color }}
+        className="absolute transform -translate-x-1/2 -translate-y-1/2 font-bold whitespace-nowrap pointer-events-none select-none flex flex-col items-center"
+        style={{ 
+          left: `${config.numberX}%`, 
+          top: `${config.numberY}%`,
+          color: config.color,
+          fontSize: isPrintView ? '14pt' : '24pt',
+          textShadow: '0 0 8px white, 0 0 8px white, 0 0 8px white'
+        }}
       >
-        <div className="rotate-[-90deg] whitespace-nowrap flex items-center gap-2">
-           <span className={cn("font-bold", isPrintView ? "text-sm" : "text-xl")} style={{ color: config.color }}>
-            N° {formattedNumber}
-           </span>
-        </div>
+        <span>N° {formattedNumber}</span>
       </div>
+
+      {/* Interactive Hint */}
+      {!isPrintView && (
+        <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity pointer-events-none">
+          <span className="bg-white/90 text-accent px-4 py-2 rounded-full font-bold shadow-lg border border-accent/20">
+            Cliquez n'importe où pour placer le numéro
+          </span>
+        </div>
+      )}
     </div>
   );
 };

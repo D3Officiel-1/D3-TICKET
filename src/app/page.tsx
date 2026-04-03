@@ -6,7 +6,7 @@ import { TicketConfig, DEFAULT_CONFIG } from '@/lib/types';
 import { TicketForm } from '@/components/raffle/TicketForm';
 import { TicketPreview } from '@/components/raffle/TicketPreview';
 import { PrintSheet } from '@/components/raffle/PrintSheet';
-import { Ticket, Sparkles, Star } from 'lucide-react';
+import { Ticket, Sparkles, Star, MousePointer2 } from 'lucide-react';
 
 export default function Home() {
   const [config, setConfig] = useState<TicketConfig>(DEFAULT_CONFIG);
@@ -25,7 +25,7 @@ export default function Home() {
               <Ticket className="w-8 h-8 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-black text-accent tracking-tight font-headline">D3 TOMBOLA</h1>
+              <h1 className="text-3xl font-black text-accent tracking-tight font-headline uppercase">D3 TOMBOLA</h1>
               <p className="text-sm text-muted-foreground font-medium">Génération de tickets professionnels</p>
             </div>
           </div>
@@ -56,14 +56,18 @@ export default function Home() {
               <h2 className="text-xl font-bold text-accent flex items-center gap-2">
                 <Star className="w-5 h-5 text-primary" /> Aperçu en temps réel
               </h2>
-              <span className="text-xs bg-accent/10 text-accent px-2 py-1 rounded-md font-bold uppercase tracking-widest">
-                Exemple: Billet n°{config.startingNumber}
-              </span>
+              <div className="flex items-center gap-2 text-xs bg-primary/10 text-primary px-3 py-1.5 rounded-full font-bold">
+                <MousePointer2 className="w-3 h-3" />
+                Cliquez sur le ticket pour placer le numéro
+              </div>
             </div>
             
-            {/* Conteneur flexible qui s'adapte à la hauteur du ticket */}
-            <div className="bg-white/50 p-4 sm:p-8 rounded-3xl border-2 border-dashed border-primary/20 flex justify-center items-center min-h-[300px] overflow-hidden">
-              <TicketPreview config={config} number={config.startingNumber} />
+            <div className="bg-white/50 p-4 sm:p-8 rounded-3xl border-2 border-dashed border-primary/20 flex justify-center items-center min-h-[450px] overflow-hidden">
+              <TicketPreview 
+                config={config} 
+                number={config.startingNumber} 
+                onConfigChange={setConfig}
+              />
             </div>
 
             <div className="mt-8 bg-accent text-white p-6 rounded-2xl shadow-xl relative overflow-hidden group">
@@ -71,15 +75,14 @@ export default function Home() {
                   <Ticket className="w-32 h-32 rotate-12" />
                </div>
                <div className="relative z-10">
-                  <h3 className="text-lg font-bold mb-2">Prêt pour l'impression ?</h3>
+                  <h3 className="text-lg font-bold mb-2">Instructions de placement</h3>
                   <p className="text-white/80 text-sm leading-relaxed mb-4">
-                    Votre configuration générera <strong>{config.quantity} tickets</strong> uniques. 
-                    Chaque ticket est optimisé pour une impression de haute qualité sur papier A4 standard.
+                    Le numéro n'est plus bloqué à gauche. Déplacez-le librement sur votre image de fond en cliquant simplement là où vous voulez qu'il apparaisse.
                   </p>
                   <ul className="text-xs space-y-1.5 opacity-90 font-medium">
-                    <li className="flex items-center gap-2">✓ Numérotation {config.generationMode === 'sequential' ? 'Séquentielle' : 'Aléatoire'}</li>
-                    <li className="flex items-center gap-2">✓ Format haute résolution PDF</li>
-                    <li className="li-check">✓ Layout optimisé : 12 tickets par page</li>
+                    <li className="flex items-center gap-2">✓ Positionnement libre par clic</li>
+                    <li className="flex items-center gap-2">✓ Rendu identique à l'impression</li>
+                    <li className="flex items-center gap-2">✓ Lisibilité garantie avec effet de contour</li>
                   </ul>
                </div>
             </div>
@@ -94,11 +97,6 @@ export default function Home() {
       <footer className="no-print mt-20 pt-10 border-t text-center text-muted-foreground px-4">
         <div className="max-w-6xl mx-auto">
           <p className="text-sm font-medium">© 2024 D3 TOMBOLA — Conçu avec passion pour vos événements.</p>
-          <div className="flex justify-center gap-4 mt-4">
-            <div className="w-2 h-2 rounded-full bg-primary" />
-            <div className="w-2 h-2 rounded-full bg-accent" />
-            <div className="w-2 h-2 rounded-full bg-secondary-foreground" />
-          </div>
         </div>
       </footer>
     </main>

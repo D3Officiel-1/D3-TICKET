@@ -5,6 +5,8 @@ export interface TicketConfig {
   generationMode: 'sequential' | 'random';
   color: string;
   backgroundImage?: string;
+  numberX: number;
+  numberY: number;
 }
 
 export const DEFAULT_CONFIG: TicketConfig = {
@@ -12,5 +14,7 @@ export const DEFAULT_CONFIG: TicketConfig = {
   quantity: 50,
   generationMode: 'sequential',
   color: "#E8308C",
-  backgroundImage: ""
+  backgroundImage: "",
+  numberX: 85,
+  numberY: 15,
 };
