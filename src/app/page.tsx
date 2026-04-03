@@ -6,18 +6,22 @@ import { TicketConfig, DEFAULT_CONFIG } from '@/lib/types';
 import { TicketForm } from '@/components/raffle/TicketForm';
 import { TicketPreview } from '@/components/raffle/TicketPreview';
 import { PrintSheet } from '@/components/raffle/PrintSheet';
-import { Ticket, Sparkles, Star, MousePointer2, Layers } from 'lucide-react';
+import { Ticket, Sparkles, Star, MousePointer2, Layers, Repeat } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function Home() {
   const [config, setConfig] = useState<TicketConfig>(DEFAULT_CONFIG);
+  const [activeFace, setActiveFace] = useState<'recto' | 'verso'>('recto');
 
   const handlePrint = () => {
     window.print();
   };
 
   const toggleVerso = () => {
-    setConfig(prev => ({ ...prev, hasVerso: !prev.hasVerso }));
+    const newHasVerso = !config.hasVerso;
+    setConfig(prev => ({ ...prev, hasVerso: newHasVerso }));
+    if (!newHasVerso) setActiveFace('recto');
   };
 
   return (
@@ -57,46 +61,58 @@ export default function Home() {
         {/* Right Column: Dynamic Preview */}
         <div className="lg:col-span-7 order-1 lg:order-2 space-y-6">
           <div className="sticky top-10">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-4">
               <h2 className="text-xl font-bold text-accent flex items-center gap-2">
-                <Star className="w-5 h-5 text-primary" /> Aperçu en temps réel
+                <Star className="w-5 h-5 text-primary" /> Édition du ticket
               </h2>
+              
               <div className="flex items-center gap-2">
+                {config.hasVerso && (
+                  <Tabs value={activeFace} onValueChange={(v) => setActiveFace(v as 'recto' | 'verso')} className="w-auto">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="recto" className="font-bold">Recto</TabsTrigger>
+                      <TabsTrigger value="verso" className="font-bold">Verso</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                )}
                 <Button 
-                  variant={config.hasVerso ? "default" : "outline"}
+                  variant={config.hasVerso ? "secondary" : "outline"}
                   size="sm"
                   onClick={toggleVerso}
                   className="gap-2 font-bold"
                 >
                   <Layers className="w-4 h-4" />
-                  {config.hasVerso ? "Verso Activé" : "Ajouter un Verso"}
+                  {config.hasVerso ? "Désactiver Verso" : "Activer Verso"}
                 </Button>
-                <div className="hidden sm:flex items-center gap-2 text-xs bg-primary/10 text-primary px-3 py-1.5 rounded-full font-bold">
-                  <MousePointer2 className="w-3 h-3" />
-                  Glissez le numéro pour le placer
-                </div>
               </div>
             </div>
             
-            <div className="bg-white/50 p-4 sm:p-8 rounded-3xl border-2 border-dashed border-primary/20 flex flex-col gap-8 justify-center items-center min-h-[450px] overflow-hidden">
-              <div className="space-y-2 w-full flex flex-col items-center">
-                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Recto (Face)</span>
+            <div className="bg-white/50 p-4 sm:p-8 rounded-3xl border-2 border-dashed border-primary/20 flex flex-col gap-4 justify-center items-center min-h-[450px] overflow-hidden relative">
+              <div className="absolute top-4 left-4 flex flex-col gap-1 z-20">
+                <span className="text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 px-2 py-1 rounded-md">
+                  Mode: {activeFace === 'recto' ? 'Recto (Face)' : 'Verso (Dos)'}
+                </span>
+                {activeFace === 'recto' && (
+                  <div className="flex items-center gap-2 text-[10px] bg-accent/10 text-accent px-2 py-1 rounded-md font-bold">
+                    <MousePointer2 className="w-3 h-3" />
+                    Glissez le numéro
+                  </div>
+                )}
+              </div>
+
+              <div className="transition-all duration-500 ease-in-out transform scale-100 hover:scale-[1.02]">
                 <TicketPreview 
                   config={config} 
-                  number={config.startingNumber} 
+                  number={activeFace === 'recto' ? config.startingNumber : ""} 
+                  isVerso={activeFace === 'verso'}
                   onConfigChange={setConfig}
                 />
               </div>
 
               {config.hasVerso && (
-                <div className="space-y-2 w-full flex flex-col items-center animate-in fade-in slide-in-from-top-4 duration-500">
-                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Verso (Dos)</span>
-                  <TicketPreview 
-                    config={config} 
-                    number="" 
-                    isVerso={true}
-                  />
-                </div>
+                <p className="text-xs text-muted-foreground font-medium animate-pulse flex items-center gap-2">
+                  <Repeat className="w-3 h-3" /> Basculez entre les faces pour prévisualiser
+                </p>
               )}
             </div>
 
@@ -105,15 +121,20 @@ export default function Home() {
                   <Ticket className="w-32 h-32 rotate-12" />
                </div>
                <div className="relative z-10">
-                  <h3 className="text-lg font-bold mb-2">Instructions de placement</h3>
+                  <h3 className="text-lg font-bold mb-2">Guide d'utilisation</h3>
                   <p className="text-white/80 text-sm leading-relaxed mb-4">
-                    Le numéro est totalement mobile. Faites-le glisser sur votre image de fond. Utilisez <b>Ctrl +</b> et <b>Ctrl -</b> pour changer sa taille.
+                    Positionnez votre numéro librement au <b>Recto</b>. Le <b>Verso</b> est idéal pour vos mentions légales ou la liste des lots.
                   </p>
-                  <ul className="text-xs space-y-1.5 opacity-90 font-medium">
-                    <li className="flex items-center gap-2">✓ Glisser-déposer fluide</li>
-                    <li className="flex items-center gap-2">✓ Taille ajustable (Raccourcis clavier)</li>
-                    <li className="flex items-center gap-2">✓ Gestion du Verso pour les règlements/lots</li>
-                  </ul>
+                  <div className="grid grid-cols-2 gap-4">
+                    <ul className="text-xs space-y-1.5 opacity-90 font-medium">
+                      <li className="flex items-center gap-2">✓ Glisser-déposer le N°</li>
+                      <li className="flex items-center gap-2">✓ Ctrl + / - : Taille</li>
+                    </ul>
+                    <ul className="text-xs space-y-1.5 opacity-90 font-medium">
+                      <li className="flex items-center gap-2">✓ Impression groupée</li>
+                      <li className="flex items-center gap-2">✓ Gestion multi-faces</li>
+                    </ul>
+                  </div>
                </div>
             </div>
           </div>
