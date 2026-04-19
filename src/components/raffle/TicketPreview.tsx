@@ -183,7 +183,10 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
   const previewStyles = useMemo(() => {
-    if (isPrintView) return {};
+    if (isPrintView) return {
+      width: '100%',
+      height: '100%'
+    };
     
     // Aspect ratios based on manual or preset dimensions
     const ratio = (config.ticketHeight || 70) / (config.ticketWidth || 140);
@@ -197,6 +200,8 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
 
   const fontSize = useMemo(() => {
     const base = config.numberSize || 24;
+    // Sur l'impression, on convertit les points en fonction de la taille réelle si nécessaire
+    // Ici on garde une proportionnelle standard pour la lisibilité
     return isPrintView ? `${base * 0.75}pt` : `${base}pt`;
   }, [config.numberSize, isPrintView]);
 
@@ -206,7 +211,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
       className={cn(
         "relative bg-white overflow-hidden",
         isPrintView 
-          ? "w-full h-full" 
+          ? "" 
           : "shadow-2xl rounded-xl group select-none cursor-move",
         isDragging && "scale-[1.01] transition-transform z-50 ring-4 ring-primary/30"
       )}
@@ -226,7 +231,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
         <div className="absolute inset-0 bg-muted/20 flex flex-col items-center justify-center text-muted-foreground font-bold text-sm h-full p-4 text-center">
           <p>{isVerso ? "Design du Verso" : "Design du Recto"}</p>
           <p className="text-[10px] font-normal mt-2 opacity-60">
-            Dimensions: {config.ticketWidth}mm x {config.ticketHeight}mm
+            {config.ticketWidth}mm x {config.ticketHeight}mm
           </p>
         </div>
       )}

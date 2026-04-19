@@ -30,46 +30,28 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
     const w = config.ticketWidth || 140;
     const h = config.ticketHeight || 70;
 
-    // Détermination heuristique du nombre par page si non prédéfini
-    let ticketsPerPage = 10;
-    let cols = 2;
-    let paddingY = '15mm';
-    let paddingX = '5mm';
+    // Dimensions d'une page A4 en mm
+    const pageW = 210;
+    const pageH = 297;
 
-    if (config.ticketType === 'event_vip') {
-      ticketsPerPage = 4;
-      cols = 1;
-      paddingY = '8.5mm';
-      paddingX = '35mm';
-    } else if (config.ticketType === 'event') {
-      ticketsPerPage = 8;
-      cols = 2;
-      paddingY = '8.5mm';
-      paddingX = '5mm';
-    } else if (config.ticketType === 'raffle') {
-      ticketsPerPage = 10;
-      cols = 2;
-      paddingY = '23.5mm';
-      paddingX = '5mm';
-    } else {
-      // Calcul automatique simplifié pour le mode personnalisé sur A4 (210x297mm)
-      const fitsX = Math.floor(200 / w) || 1;
-      const fitsY = Math.floor(280 / h) || 1;
-      cols = fitsX;
-      ticketsPerPage = fitsX * fitsY;
-      paddingX = `${(210 - (fitsX * w)) / 2}mm`;
-      paddingY = `${(297 - (fitsY * h)) / 2}mm`;
-    }
+    // Calcul dynamique du nombre de tickets par ligne et par colonne
+    const cols = Math.floor(pageW / w) || 1;
+    const rows = Math.floor(pageH / h) || 1;
+    const ticketsPerPage = cols * rows;
+
+    // Calcul des marges pour centrer la grille sur la page
+    const paddingX = (pageW - (cols * w)) / 2;
+    const paddingY = (pageH - (rows * h)) / 2;
 
     return {
       ticketsPerPage,
       cols,
       width: `${w}mm`,
       height: `${h}mm`,
-      paddingY,
-      paddingX
+      paddingY: `${paddingY}mm`,
+      paddingX: `${paddingX}mm`
     };
-  }, [config.ticketType, config.ticketWidth, config.ticketHeight]);
+  }, [config.ticketWidth, config.ticketHeight]);
 
   const pages = useMemo(() => {
     const p = [];
@@ -104,7 +86,7 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
                   height: layout.height,
                   boxSizing: 'border-box'
                 }}
-                className="border-[0.3mm] border-dashed border-gray-400 box-border overflow-hidden"
+                className="border-[0.1mm] border-gray-200 box-border overflow-hidden relative"
               >
                 <TicketPreview config={config} number={num} isPrintView={true} isVerso={false} />
               </div>
@@ -137,7 +119,7 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
                     height: layout.height,
                     boxSizing: 'border-box'
                   }}
-                  className="border-[0.3mm] border-dashed border-gray-400 box-border overflow-hidden"
+                  className="border-[0.1mm] border-gray-200 box-border overflow-hidden relative"
                 >
                   <TicketPreview config={config} number="" isPrintView={true} isVerso={true} />
                 </div>
