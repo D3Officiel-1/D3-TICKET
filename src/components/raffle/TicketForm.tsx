@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Printer, Image as ImageIcon, Palette, Layers, Ticket, Star, X, Wand2, Ruler, Plus, Target } from 'lucide-react';
+import { Printer, Image as ImageIcon, Palette, Layers, Ticket, Star, X, Wand2, Ruler, Plus, Target, Sparkles } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
 
@@ -117,7 +117,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
                 <SelectValue placeholder="Choisir un format" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="event_vip">Événement Standard VIP (14x7cm)</SelectItem>
+                <SelectItem value="event_vip">Événement Standard (14x7cm)</SelectItem>
                 <SelectItem value="event">Événement Petit (10x7cm)</SelectItem>
                 <SelectItem value="raffle">Tombola Classique (10x5cm)</SelectItem>
                 <SelectItem value="custom">Format Manuel (Personnalisé)</SelectItem>
