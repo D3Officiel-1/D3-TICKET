@@ -2,7 +2,7 @@
 "use client"
 
 import React, { useMemo, useRef, useState, useEffect, useCallback } from 'react';
-import { TicketConfig, NumberingInstance } from '@/lib/types';
+import { TicketConfig, NumberingInstance, DEFAULT_CONFIG } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 interface TicketPreviewProps {
@@ -16,6 +16,8 @@ interface TicketPreviewProps {
 export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, isPrintView = false, isVerso = false, onConfigChange }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+
+  const numberings = config.numberings || DEFAULT_CONFIG.numberings;
 
   // Formatting logic: Prefix + PaddedNumber + Suffix
   const displayValue = useMemo(() => {
@@ -39,7 +41,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
   const detectBestColor = useCallback(() => {
     if (!isValidUrl || !imageUrl || isVerso || !onConfigChange || !config.autoContrast) return;
 
-    const activeNum = config.numberings.find(n => n.id === config.activeNumberingId);
+    const activeNum = numberings.find(n => n.id === config.activeNumberingId) || numberings[0];
     if (!activeNum) return;
 
     const img = new window.Image();
@@ -80,13 +82,13 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
         onConfigChange({ ...config, color: bestColor });
       }
     };
-  }, [imageUrl, isValidUrl, isVerso, config, onConfigChange]);
+  }, [imageUrl, isValidUrl, isVerso, config, onConfigChange, numberings]);
 
   useEffect(() => {
     if (config.autoContrast) {
       detectBestColor();
     }
-  }, [config.autoContrast, config.numberings, config.backgroundImage, detectBestColor]);
+  }, [config.autoContrast, numberings, config.backgroundImage, detectBestColor]);
 
   const updatePosition = useCallback((clientX: number, clientY: number) => {
     if (!containerRef.current || !onConfigChange || isVerso) return;
@@ -95,14 +97,14 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
     const x = ((clientX - rect.left) / rect.width) * 100;
     const y = ((clientY - rect.top) / rect.height) * 100;
 
-    const newNumberings = config.numberings.map(n => 
+    const newNumberings = numberings.map(n => 
       n.id === config.activeNumberingId 
         ? { ...n, x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) }
         : n
     );
 
     onConfigChange({ ...config, numberings: newNumberings });
-  }, [config, onConfigChange, isVerso]);
+  }, [config, onConfigChange, isVerso, numberings]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (isPrintView || !onConfigChange || isVerso) return;
@@ -123,7 +125,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
     if (isPrintView || !onConfigChange || isVerso) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      const activeNum = config.numberings.find(n => n.id === config.activeNumberingId);
+      const activeNum = numberings.find(n => n.id === config.activeNumberingId);
       if (!activeNum) return;
 
       if (e.ctrlKey || e.metaKey) {
@@ -135,7 +137,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
           else if (e.key === '-') newSize = Math.max(6, activeNum.size - step);
           
           if (newSize !== activeNum.size) {
-            const newNumberings = config.numberings.map(n => n.id === activeNum.id ? { ...n, size: newSize } : n);
+            const newNumberings = numberings.map(n => n.id === activeNum.id ? { ...n, size: newSize } : n);
             onConfigChange({ ...config, numberings: newNumberings });
           }
         }
@@ -147,7 +149,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
           else if (e.key === 'ArrowLeft') newRotation = (activeNum.rotation - step + 360) % 360;
           
           if (newRotation !== activeNum.rotation) {
-            const newNumberings = config.numberings.map(n => n.id === activeNum.id ? { ...n, rotation: newRotation } : n);
+            const newNumberings = numberings.map(n => n.id === activeNum.id ? { ...n, rotation: newRotation } : n);
             onConfigChange({ ...config, numberings: newNumberings });
           }
         }
@@ -156,7 +158,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [config, onConfigChange, isPrintView, isVerso]);
+  }, [config, onConfigChange, isPrintView, isVerso, numberings]);
 
   useEffect(() => {
     if (isDragging) {
@@ -207,7 +209,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
         </div>
       )}
 
-      {!isVerso && displayValue !== "" && config.numberings.map((num) => (
+      {!isVerso && displayValue !== "" && numberings.map((num) => (
         <div 
           key={num.id}
           onClick={(e) => {

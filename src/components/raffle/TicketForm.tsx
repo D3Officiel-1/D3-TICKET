@@ -2,13 +2,13 @@
 "use client"
 
 import React, { useState, useEffect } from 'react';
-import { TicketConfig, TicketType, NumberingInstance } from '@/lib/types';
+import { TicketConfig, TicketType, NumberingInstance, DEFAULT_CONFIG } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Settings2, Sparkles, Printer, Image as ImageIcon, Palette, Layers, Ticket, Star, History, X, Wand2, Hash, Ruler, Plus, Trash2, Target } from 'lucide-react';
+import { Printer, Image as ImageIcon, Palette, Layers, Ticket, Star, X, Wand2, Ruler, Plus, Target } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
 
@@ -62,21 +62,24 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
       size: 24,
       rotation: 0
     };
+    const currentNumberings = config.numberings || DEFAULT_CONFIG.numberings;
     updateFields({ 
-      numberings: [...config.numberings, newNum],
+      numberings: [...currentNumberings, newNum],
       activeNumberingId: newId
     });
   };
 
   const removeNumbering = (id: string) => {
-    if (config.numberings.length <= 1) return;
-    const newNumberings = config.numberings.filter(n => n.id !== id);
+    const currentNumberings = config.numberings || DEFAULT_CONFIG.numberings;
+    if (currentNumberings.length <= 1) return;
+    const newNumberings = currentNumberings.filter(n => n.id !== id);
     const newActiveId = config.activeNumberingId === id ? newNumberings[0].id : config.activeNumberingId;
     updateFields({ numberings: newNumberings, activeNumberingId: newActiveId });
   };
 
   const updateActiveNumbering = (updates: Partial<NumberingInstance>) => {
-    const newNumberings = config.numberings.map(n => 
+    const currentNumberings = config.numberings || DEFAULT_CONFIG.numberings;
+    const newNumberings = currentNumberings.map(n => 
       n.id === config.activeNumberingId ? { ...n, ...updates } : n
     );
     updateFields({ numberings: newNumberings });
@@ -95,15 +98,9 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
     updateFields({ ticketType: type, ticketWidth: width, ticketHeight: height });
   };
 
-  const removeFromLibrary = (url: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const newLib = localLibrary.filter(item => item !== url);
-    setLocalLibrary(newLib);
-    localStorage.setItem(LIBRARY_STORAGE_KEY, JSON.stringify(newLib));
-  };
-
   const backgroundPresets = PlaceHolderImages.filter(img => img.id.startsWith('bg-'));
-  const activeNumbering = config.numberings.find(n => n.id === config.activeNumberingId) || config.numberings[0];
+  const numberings = config.numberings || DEFAULT_CONFIG.numberings;
+  const activeNumbering = numberings.find(n => n.id === config.activeNumberingId) || numberings[0];
 
   return (
     <div className="space-y-8 bg-white p-6 rounded-2xl shadow-sm border border-border">
@@ -160,7 +157,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
         
         <div className="space-y-4">
           <div className="flex flex-wrap gap-2">
-            {config.numberings.map((num, idx) => (
+            {numberings.map((num, idx) => (
               <div key={num.id} className="relative group">
                 <Button
                   variant={config.activeNumberingId === num.id ? "default" : "outline"}
@@ -170,7 +167,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
                 >
                   N° {idx + 1}
                 </Button>
-                {config.numberings.length > 1 && (
+                {numberings.length > 1 && (
                   <button 
                     onClick={() => removeNumbering(num.id)}
                     className="absolute -top-2 -right-2 bg-white border border-red-200 text-red-500 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"

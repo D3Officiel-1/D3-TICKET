@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -21,9 +22,18 @@ export default function Home() {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
-        setConfig(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        // Ensure new features (like multiple numberings) are present for users with old saved state
+        setConfig({
+          ...DEFAULT_CONFIG,
+          ...parsed,
+          numberings: Array.isArray(parsed.numberings) && parsed.numberings.length > 0 
+            ? parsed.numberings 
+            : DEFAULT_CONFIG.numberings
+        });
       } catch (e) {
         console.error("Erreur de chargement de la config locale", e);
+        setConfig(DEFAULT_CONFIG);
       }
     }
     setIsLoaded(true);
