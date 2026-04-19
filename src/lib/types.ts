@@ -1,6 +1,14 @@
 
 export type TicketType = 'event_vip' | 'event' | 'raffle' | 'custom';
 
+export interface NumberingInstance {
+  id: string;
+  x: number;
+  y: number;
+  size: number;
+  rotation: number;
+}
+
 export interface TicketConfig {
   startingNumber: number;
   quantity: number;
@@ -9,10 +17,8 @@ export interface TicketConfig {
   backgroundImage?: string;
   hasVerso: boolean;
   versoBackgroundImage?: string;
-  numberX: number;
-  numberY: number;
-  numberSize: number;
-  numberRotation: number;
+  numberings: NumberingInstance[];
+  activeNumberingId: string;
   ticketType: TicketType;
   autoContrast?: boolean;
   numberPrefix?: string;
@@ -29,10 +35,10 @@ export const DEFAULT_CONFIG: TicketConfig = {
   backgroundImage: "",
   hasVerso: false,
   versoBackgroundImage: "",
-  numberX: 85,
-  numberY: 15,
-  numberSize: 24,
-  numberRotation: 0,
+  numberings: [
+    { id: 'num-1', x: 85, y: 15, size: 24, rotation: 0 }
+  ],
+  activeNumberingId: 'num-1',
   ticketType: 'event_vip',
   autoContrast: false,
   numberPrefix: "",

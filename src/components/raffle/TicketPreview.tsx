@@ -2,7 +2,7 @@
 "use client"
 
 import React, { useMemo, useRef, useState, useEffect, useCallback } from 'react';
-import { TicketConfig } from '@/lib/types';
+import { TicketConfig, NumberingInstance } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 interface TicketPreviewProps {
@@ -15,7 +15,6 @@ interface TicketPreviewProps {
 
 export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, isPrintView = false, isVerso = false, onConfigChange }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const imageRef = useRef<HTMLImageElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 
   // Formatting logic: Prefix + PaddedNumber + Suffix
@@ -40,6 +39,9 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
   const detectBestColor = useCallback(() => {
     if (!isValidUrl || !imageUrl || isVerso || !onConfigChange || !config.autoContrast) return;
 
+    const activeNum = config.numberings.find(n => n.id === config.activeNumberingId);
+    if (!activeNum) return;
+
     const img = new window.Image();
     img.crossOrigin = "anonymous";
     img.src = imageUrl;
@@ -51,12 +53,10 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
 
       canvas.width = 100;
       canvas.height = 100;
-
       ctx.drawImage(img, 0, 0, 100, 100);
 
-      const x = Math.floor(config.numberX);
-      const y = Math.floor(config.numberY);
-
+      const x = Math.floor(activeNum.x);
+      const y = Math.floor(activeNum.y);
       const sampleSize = 5;
       const data = ctx.getImageData(
         Math.max(0, x - sampleSize), 
@@ -86,7 +86,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
     if (config.autoContrast) {
       detectBestColor();
     }
-  }, [config.autoContrast, config.numberX, config.numberY, config.backgroundImage, detectBestColor]);
+  }, [config.autoContrast, config.numberings, config.backgroundImage, detectBestColor]);
 
   const updatePosition = useCallback((clientX: number, clientY: number) => {
     if (!containerRef.current || !onConfigChange || isVerso) return;
@@ -95,11 +95,13 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
     const x = ((clientX - rect.left) / rect.width) * 100;
     const y = ((clientY - rect.top) / rect.height) * 100;
 
-    onConfigChange({
-      ...config,
-      numberX: Math.max(0, Math.min(100, x)),
-      numberY: Math.max(0, Math.min(100, y))
-    });
+    const newNumberings = config.numberings.map(n => 
+      n.id === config.activeNumberingId 
+        ? { ...n, x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) }
+        : n
+    );
+
+    onConfigChange({ ...config, numberings: newNumberings });
   }, [config, onConfigChange, isVerso]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -121,24 +123,33 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
     if (isPrintView || !onConfigChange || isVerso) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      const activeNum = config.numberings.find(n => n.id === config.activeNumberingId);
+      if (!activeNum) return;
+
       if (e.ctrlKey || e.metaKey) {
         if (e.key === '+' || e.key === '=' || e.key === '-') {
           e.preventDefault();
           const step = 2;
-          const currentSize = config.numberSize || 24;
-          let newSize = currentSize;
-          if (e.key === '+' || e.key === '=') newSize = Math.min(150, currentSize + step);
-          else if (e.key === '-') newSize = Math.max(6, currentSize - step);
-          if (newSize !== currentSize) onConfigChange({ ...config, numberSize: newSize });
+          let newSize = activeNum.size;
+          if (e.key === '+' || e.key === '=') newSize = Math.min(150, activeNum.size + step);
+          else if (e.key === '-') newSize = Math.max(6, activeNum.size - step);
+          
+          if (newSize !== activeNum.size) {
+            const newNumberings = config.numberings.map(n => n.id === activeNum.id ? { ...n, size: newSize } : n);
+            onConfigChange({ ...config, numberings: newNumberings });
+          }
         }
         if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
           e.preventDefault();
           const step = 5;
-          const currentRotation = config.numberRotation || 0;
-          let newRotation = currentRotation;
-          if (e.key === 'ArrowRight') newRotation = (currentRotation + step) % 360;
-          else if (e.key === 'ArrowLeft') newRotation = (currentRotation - step + 360) % 360;
-          if (newRotation !== currentRotation) onConfigChange({ ...config, numberRotation: newRotation });
+          let newRotation = activeNum.rotation;
+          if (e.key === 'ArrowRight') newRotation = (activeNum.rotation + step) % 360;
+          else if (e.key === 'ArrowLeft') newRotation = (activeNum.rotation - step + 360) % 360;
+          
+          if (newRotation !== activeNum.rotation) {
+            const newNumberings = config.numberings.map(n => n.id === activeNum.id ? { ...n, rotation: newRotation } : n);
+            onConfigChange({ ...config, numberings: newNumberings });
+          }
         }
       }
     };
@@ -162,36 +173,20 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
   const previewStyles = useMemo(() => {
-    if (isPrintView) return {
-      width: '100%',
-      height: '100%'
-    };
-    
-    // On calcule le ratio réel basé sur les mm saisis
+    if (isPrintView) return { width: '100%', height: '100%' };
     const w = config.ticketWidth || 140;
     const h = config.ticketHeight || 70;
     const ratio = h / w;
-    const maxWidth = 550; // Limite visuelle dans l'interface
-    
-    return {
-      width: `${maxWidth}px`,
-      height: `${maxWidth * ratio}px`
-    };
+    const maxWidth = 550;
+    return { width: `${maxWidth}px`, height: `${maxWidth * ratio}px` };
   }, [config.ticketWidth, config.ticketHeight, isPrintView]);
-
-  const fontSize = useMemo(() => {
-    const base = config.numberSize || 24;
-    return isPrintView ? `${base * 0.75}pt` : `${base}pt`;
-  }, [config.numberSize, isPrintView]);
 
   return (
     <div 
       ref={containerRef}
       className={cn(
         "relative bg-white overflow-hidden transition-all duration-300",
-        isPrintView 
-          ? "" 
-          : "shadow-2xl rounded-xl group select-none cursor-move",
+        isPrintView ? "" : "shadow-2xl rounded-xl group select-none cursor-move",
         isDragging && "scale-[1.01] transition-transform z-50 ring-4 ring-primary/30"
       )}
       style={previewStyles}
@@ -199,7 +194,6 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
     >
       {isValidUrl && imageUrl ? (
         <img 
-          ref={imageRef}
           src={imageUrl} 
           alt={isVerso ? "Verso" : "Recto"} 
           className="absolute inset-0 w-full h-full object-fill block"
@@ -209,24 +203,30 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
       ) : (
         <div className="absolute inset-0 bg-muted/20 flex flex-col items-center justify-center text-muted-foreground font-bold text-sm h-full p-4 text-center">
           <p>{isVerso ? "Design du Verso" : "Design du Recto"}</p>
-          <p className="text-[10px] font-normal mt-2 opacity-60">
-            {config.ticketWidth}mm x {config.ticketHeight}mm
-          </p>
+          <p className="text-[10px] font-normal mt-2 opacity-60">{config.ticketWidth}mm x {config.ticketHeight}mm</p>
         </div>
       )}
 
-      {!isVerso && displayValue !== "" && (
+      {!isVerso && displayValue !== "" && config.numberings.map((num) => (
         <div 
+          key={num.id}
+          onClick={(e) => {
+            if (isPrintView || !onConfigChange) return;
+            e.stopPropagation();
+            onConfigChange({ ...config, activeNumberingId: num.id });
+          }}
           className={cn(
-            "absolute font-bold whitespace-nowrap pointer-events-none select-none z-20 origin-center",
-            isDragging && "opacity-80"
+            "absolute font-bold whitespace-nowrap select-none z-20 origin-center transition-opacity",
+            !isPrintView && "cursor-pointer pointer-events-auto",
+            isDragging && num.id === config.activeNumberingId ? "opacity-80" : "opacity-100",
+            !isPrintView && num.id === config.activeNumberingId && "ring-2 ring-primary ring-offset-2 rounded-sm"
           )}
           style={{ 
-            left: `${config.numberX}%`, 
-            top: `${config.numberY}%`,
-            transform: `translate(-50%, -50%) rotate(${config.numberRotation || 0}deg)`,
+            left: `${num.x}%`, 
+            top: `${num.y}%`,
+            transform: `translate(-50%, -50%) rotate(${num.rotation || 0}deg)`,
             color: config.color,
-            fontSize: fontSize,
+            fontSize: isPrintView ? `${num.size * 0.75}pt` : `${num.size}pt`,
             textShadow: config.color === "#FFFFFF" 
               ? '0 0 3px black, 0 0 6px rgba(0,0,0,0.5)' 
               : '0 0 3px white, 0 0 6px rgba(255,255,255,0.5)'
@@ -234,21 +234,17 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
         >
           {displayValue}
         </div>
-      )}
+      ))}
 
       {!isPrintView && !isVerso && !isDragging && (
         <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity pointer-events-none">
           <div className="flex flex-col items-center gap-2">
             <span className="bg-white/95 text-accent px-4 py-2 rounded-full font-bold shadow-lg border border-accent/20">
-              Position: {config.ticketWidth}x{config.ticketHeight}mm
+              Format: {config.ticketWidth}x{config.ticketHeight}mm
             </span>
             <div className="flex flex-wrap justify-center gap-1">
-              <span className="bg-primary/95 text-white text-[11px] px-3 py-1 rounded-full font-bold shadow-md">
-                Ctrl + / - : Taille
-              </span>
-              <span className="bg-accent/95 text-white text-[11px] px-3 py-1 rounded-full font-bold shadow-md">
-                Ctrl + ← → : Rotation
-              </span>
+              <span className="bg-primary/95 text-white text-[11px] px-3 py-1 rounded-full font-bold shadow-md">Ctrl + / - : Taille</span>
+              <span className="bg-accent/95 text-white text-[11px] px-3 py-1 rounded-full font-bold shadow-md">Ctrl + ← → : Rotation</span>
             </div>
           </div>
         </div>
