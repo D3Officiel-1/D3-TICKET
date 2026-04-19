@@ -126,6 +126,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey) {
+        // Handle Size (+ / -)
         if (e.key === '+' || e.key === '=' || e.key === '-') {
           e.preventDefault();
           const step = 2;
@@ -140,6 +141,24 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
 
           if (newSize !== currentSize) {
             onConfigChange({ ...config, numberSize: newSize });
+          }
+        }
+
+        // Handle Rotation (Left / Right)
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+          e.preventDefault();
+          const step = 5; // Degrees
+          const currentRotation = config.numberRotation || 0;
+          let newRotation = currentRotation;
+
+          if (e.key === 'ArrowRight') {
+            newRotation = (currentRotation + step) % 360;
+          } else if (e.key === 'ArrowLeft') {
+            newRotation = (currentRotation - step + 360) % 360;
+          }
+
+          if (newRotation !== currentRotation) {
+            onConfigChange({ ...config, numberRotation: newRotation });
           }
         }
       }
@@ -219,12 +238,13 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
       {!isVerso && displayValue !== "" && (
         <div 
           className={cn(
-            "absolute transform -translate-x-1/2 -translate-y-1/2 font-bold whitespace-nowrap pointer-events-none select-none z-20",
+            "absolute font-bold whitespace-nowrap pointer-events-none select-none z-20 origin-center",
             isDragging && "opacity-80"
           )}
           style={{ 
             left: `${config.numberX}%`, 
             top: `${config.numberY}%`,
+            transform: `translate(-50%, -50%) rotate(${config.numberRotation || 0}deg)`,
             color: config.color,
             fontSize: fontSize,
             textShadow: config.color === "#FFFFFF" 
@@ -242,9 +262,14 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
             <span className="bg-white/95 text-accent px-4 py-2 rounded-full font-bold shadow-lg border border-accent/20">
               Glissez pour placer le numéro
             </span>
-            <span className="bg-primary/95 text-white text-[11px] px-3 py-1 rounded-full font-bold shadow-md">
-              Ctrl + / - pour la taille
-            </span>
+            <div className="flex flex-wrap justify-center gap-1">
+              <span className="bg-primary/95 text-white text-[11px] px-3 py-1 rounded-full font-bold shadow-md">
+                Ctrl + / - : Taille
+              </span>
+              <span className="bg-accent/95 text-white text-[11px] px-3 py-1 rounded-full font-bold shadow-md">
+                Ctrl + ← → : Rotation
+              </span>
+            </div>
           </div>
         </div>
       )}
