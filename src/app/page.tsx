@@ -23,13 +23,17 @@ export default function Home() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        // Ensure new features (like multiple numberings) are present for users with old saved state
+        // Ensure new features (like multiple numberings and dimensions) are present
         setConfig({
           ...DEFAULT_CONFIG,
           ...parsed,
+          // Extra safety for the numberings array which was a newer feature
           numberings: Array.isArray(parsed.numberings) && parsed.numberings.length > 0 
             ? parsed.numberings 
-            : DEFAULT_CONFIG.numberings
+            : DEFAULT_CONFIG.numberings,
+          // Ensure dimensions are numbers
+          ticketWidth: Number(parsed.ticketWidth) || DEFAULT_CONFIG.ticketWidth,
+          ticketHeight: Number(parsed.ticketHeight) || DEFAULT_CONFIG.ticketHeight
         });
       } catch (e) {
         console.error("Erreur de chargement de la config locale", e);

@@ -131,7 +131,10 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
               <Input 
                 type="number"
                 value={config.ticketWidth}
-                onChange={(e) => updateFields({ ticketWidth: Math.max(10, parseInt(e.target.value) || 0), ticketType: 'custom' })}
+                onChange={(e) => {
+                  const val = Math.max(1, parseInt(e.target.value) || 0);
+                  updateFields({ ticketWidth: val, ticketType: 'custom' });
+                }}
                 className="font-bold bg-white"
               />
             </div>
@@ -140,7 +143,10 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
               <Input 
                 type="number"
                 value={config.ticketHeight}
-                onChange={(e) => updateFields({ ticketHeight: Math.max(10, parseInt(e.target.value) || 0), ticketType: 'custom' })}
+                onChange={(e) => {
+                  const val = Math.max(1, parseInt(e.target.value) || 0);
+                  updateFields({ ticketHeight: val, ticketType: 'custom' });
+                }}
                 className="font-bold bg-white"
               />
             </div>
