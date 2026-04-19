@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Printer, Image as ImageIcon, Palette, Layers, Ticket, Star, X, Wand2, Ruler, Plus, Target, Sparkles } from 'lucide-react';
+import { Printer, Image as ImageIcon, Palette, Layers, Ticket, Star, X, Wand2, Ruler, Plus, Target, Sparkles, CheckCheck } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
 
@@ -60,7 +60,9 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
       x: 50,
       y: 50,
       size: 24,
-      rotation: 0
+      rotation: 0,
+      color: config.color,
+      autoContrast: config.autoContrast
     };
     const currentNumberings = config.numberings || DEFAULT_CONFIG.numberings;
     updateFields({ 
@@ -82,6 +84,21 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
     const newNumberings = currentNumberings.map(n => 
       n.id === config.activeNumberingId ? { ...n, ...updates } : n
     );
+    updateFields({ numberings: newNumberings });
+  };
+
+  const applyActiveToAll = () => {
+    const currentNumberings = config.numberings || DEFAULT_CONFIG.numberings;
+    const active = currentNumberings.find(n => n.id === config.activeNumberingId);
+    if (!active) return;
+
+    const newNumberings = currentNumberings.map(n => ({
+      ...n,
+      color: active.color,
+      autoContrast: active.autoContrast,
+      size: active.size,
+      rotation: active.rotation
+    }));
     updateFields({ numberings: newNumberings });
   };
 
@@ -206,26 +223,63 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
                 />
               </div>
             </div>
+
+            {/* Individual Color for Active Numbering */}
+            <div className="space-y-3 pt-3 border-t">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs uppercase font-bold text-muted-foreground">Style du Point N° {numberings.findIndex(n => n.id === config.activeNumberingId) + 1}</Label>
+                <Button 
+                  variant={(activeNumbering.autoContrast || (activeNumbering.autoContrast === undefined && config.autoContrast)) ? "default" : "outline"}
+                  size="sm"
+                  className="h-7 text-[9px] gap-1 px-2 uppercase font-black"
+                  onClick={() => updateActiveNumbering({ autoContrast: !(activeNumbering.autoContrast || (activeNumbering.autoContrast === undefined && config.autoContrast)) })}
+                >
+                  <Wand2 className="w-3 h-3" /> Auto
+                </Button>
+              </div>
+              <div className="flex gap-2">
+                <Input 
+                  type="color" 
+                  className="w-10 h-8 p-1 cursor-pointer" 
+                  value={activeNumbering.color || config.color} 
+                  onChange={(e) => updateActiveNumbering({ color: e.target.value, autoContrast: false })} 
+                />
+                <Input 
+                  value={activeNumbering.color || config.color} 
+                  onChange={(e) => updateActiveNumbering({ color: e.target.value, autoContrast: false })} 
+                  className="h-8 font-mono text-xs" 
+                />
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={applyActiveToAll}
+                  className="h-8 text-[9px] font-bold gap-1"
+                  title="Appliquer ce style à tous les numéros"
+                >
+                  <CheckCheck className="w-3 h-3" /> Tous
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Visuals Section */}
+      {/* Global Style Section */}
       <div>
         <h2 className="text-xl font-bold flex items-center gap-2 mb-6 text-accent">
-          <Palette className="w-5 h-5" /> Design & Couleurs
+          <Palette className="w-5 h-5" /> Style Global
         </h2>
         <div className="space-y-4">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label>Couleur universelle des numéros</Label>
+              <Label>Couleur par défaut / globale</Label>
               <Button 
                 variant={config.autoContrast ? "default" : "outline"}
                 size="sm"
                 className="h-7 text-[10px] gap-1 px-2 uppercase font-black"
                 onClick={() => updateFields({ autoContrast: !config.autoContrast })}
               >
-                <Wand2 className="w-3 h-3" /> {config.autoContrast ? "Contraste Auto : ON" : "Activer Contraste Auto"}
+                <Wand2 className="w-3 h-3" /> Global Auto
               </Button>
             </div>
             <div className="flex gap-2">

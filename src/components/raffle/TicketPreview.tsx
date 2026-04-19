@@ -19,7 +19,6 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
 
   const numberings = config.numberings || DEFAULT_CONFIG.numberings;
 
-  // Formatting logic: Prefix + PaddedNumber + Suffix
   const displayValue = useMemo(() => {
     if (number === "") return "";
     const formattedNum = String(number).padStart(5, '0');
@@ -38,57 +37,67 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
     }
   }, [imageUrl]);
 
-  const detectBestColor = useCallback(() => {
-    if (!isValidUrl || !imageUrl || isVerso || !onConfigChange || !config.autoContrast) return;
+  const detectBestColorForPoint = useCallback((num: NumberingInstance, img: HTMLImageElement) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
 
-    const activeNum = numberings.find(n => n.id === config.activeNumberingId) || numberings[0];
-    if (!activeNum) return;
+    canvas.width = 100;
+    canvas.height = 100;
+    ctx.drawImage(img, 0, 0, 100, 100);
+
+    const x = Math.floor(num.x);
+    const y = Math.floor(num.y);
+    const sampleSize = 5;
+    const data = ctx.getImageData(
+      Math.max(0, x - sampleSize), 
+      Math.max(0, y - sampleSize), 
+      sampleSize * 2, 
+      sampleSize * 2
+    ).data;
+
+    let totalLuminance = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      totalLuminance += (0.299 * r + 0.587 * g + 0.114 * b);
+    }
+
+    const avgLuminance = totalLuminance / (data.length / 4);
+    return avgLuminance > 128 ? "#000000" : "#FFFFFF";
+  }, []);
+
+  useEffect(() => {
+    if (!isValidUrl || !imageUrl || isVerso || !onConfigChange) return;
+
+    const needsAutoContrast = numberings.some(n => n.autoContrast || (n.autoContrast === undefined && config.autoContrast));
+    if (!needsAutoContrast) return;
 
     const img = new window.Image();
     img.crossOrigin = "anonymous";
     img.src = imageUrl;
 
     img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
+      let hasChanged = false;
+      const newNumberings = numberings.map(n => {
+        const shouldAuto = n.autoContrast || (n.autoContrast === undefined && config.autoContrast);
+        if (shouldAuto) {
+          const bestColor = detectBestColorForPoint(n, img);
+          const currentColor = n.color || config.color;
+          if (bestColor && bestColor !== currentColor) {
+            hasChanged = true;
+            return { ...n, color: bestColor, autoContrast: true };
+          }
+        }
+        return n;
+      });
 
-      canvas.width = 100;
-      canvas.height = 100;
-      ctx.drawImage(img, 0, 0, 100, 100);
-
-      const x = Math.floor(activeNum.x);
-      const y = Math.floor(activeNum.y);
-      const sampleSize = 5;
-      const data = ctx.getImageData(
-        Math.max(0, x - sampleSize), 
-        Math.max(0, y - sampleSize), 
-        sampleSize * 2, 
-        sampleSize * 2
-      ).data;
-
-      let totalLuminance = 0;
-      for (let i = 0; i < data.length; i += 4) {
-        const r = data[i];
-        const g = data[i + 1];
-        const b = data[i + 2];
-        totalLuminance += (0.299 * r + 0.587 * g + 0.114 * b);
-      }
-
-      const avgLuminance = totalLuminance / (data.length / 4);
-      const bestColor = avgLuminance > 128 ? "#000000" : "#FFFFFF";
-      
-      if (config.color !== bestColor) {
-        onConfigChange({ ...config, color: bestColor });
+      if (hasChanged) {
+        onConfigChange({ ...config, numberings: newNumberings });
       }
     };
-  }, [imageUrl, isValidUrl, isVerso, config, onConfigChange, numberings]);
-
-  useEffect(() => {
-    if (config.autoContrast) {
-      detectBestColor();
-    }
-  }, [config.autoContrast, numberings, config.backgroundImage, detectBestColor]);
+  }, [imageUrl, isValidUrl, isVerso, config, onConfigChange, numberings, detectBestColorForPoint]);
 
   const updatePosition = useCallback((clientX: number, clientY: number) => {
     if (!containerRef.current || !onConfigChange || isVerso) return;
@@ -209,34 +218,37 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
         </div>
       )}
 
-      {!isVerso && displayValue !== "" && numberings.map((num) => (
-        <div 
-          key={num.id}
-          onClick={(e) => {
-            if (isPrintView || !onConfigChange) return;
-            e.stopPropagation();
-            onConfigChange({ ...config, activeNumberingId: num.id });
-          }}
-          className={cn(
-            "absolute font-bold whitespace-nowrap select-none z-20 origin-center transition-opacity",
-            !isPrintView && "cursor-pointer pointer-events-auto",
-            isDragging && num.id === config.activeNumberingId ? "opacity-80" : "opacity-100",
-            !isPrintView && num.id === config.activeNumberingId && "ring-2 ring-primary ring-offset-2 rounded-sm"
-          )}
-          style={{ 
-            left: `${num.x}%`, 
-            top: `${num.y}%`,
-            transform: `translate(-50%, -50%) rotate(${num.rotation || 0}deg)`,
-            color: config.color,
-            fontSize: isPrintView ? `${num.size * 0.75}pt` : `${num.size}pt`,
-            textShadow: config.color === "#FFFFFF" 
-              ? '0 0 3px black, 0 0 6px rgba(0,0,0,0.5)' 
-              : '0 0 3px white, 0 0 6px rgba(255,255,255,0.5)'
-          }}
-        >
-          {displayValue}
-        </div>
-      ))}
+      {!isVerso && displayValue !== "" && numberings.map((num) => {
+        const currentColor = num.color || config.color;
+        return (
+          <div 
+            key={num.id}
+            onClick={(e) => {
+              if (isPrintView || !onConfigChange) return;
+              e.stopPropagation();
+              onConfigChange({ ...config, activeNumberingId: num.id });
+            }}
+            className={cn(
+              "absolute font-bold whitespace-nowrap select-none z-20 origin-center transition-opacity",
+              !isPrintView && "cursor-pointer pointer-events-auto",
+              isDragging && num.id === config.activeNumberingId ? "opacity-80" : "opacity-100",
+              !isPrintView && num.id === config.activeNumberingId && "ring-2 ring-primary ring-offset-2 rounded-sm"
+            )}
+            style={{ 
+              left: `${num.x}%`, 
+              top: `${num.y}%`,
+              transform: `translate(-50%, -50%) rotate(${num.rotation || 0}deg)`,
+              color: currentColor,
+              fontSize: isPrintView ? `${num.size * 0.75}pt` : `${num.size}pt`,
+              textShadow: currentColor === "#FFFFFF" 
+                ? '0 0 3px black, 0 0 6px rgba(0,0,0,0.5)' 
+                : '0 0 3px white, 0 0 6px rgba(255,255,255,0.5)'
+            }}
+          >
+            {displayValue}
+          </div>
+        );
+      })}
 
       {!isPrintView && !isVerso && !isDragging && (
         <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity pointer-events-none">

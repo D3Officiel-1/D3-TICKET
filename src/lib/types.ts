@@ -7,6 +7,8 @@ export interface NumberingInstance {
   y: number;
   size: number;
   rotation: number;
+  color?: string; // Optionnel : couleur individuelle
+  autoContrast?: boolean; // Optionnel : contraste auto individuel
 }
 
 export interface TicketConfig {
