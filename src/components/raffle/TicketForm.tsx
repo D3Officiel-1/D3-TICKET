@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Printer, Image as ImageIcon, Palette, Layers, Ticket, Star, X, Wand2, Ruler, Plus, Target, Sparkles, CheckCheck } from 'lucide-react';
+import { Printer, Image as ImageIcon, Palette, Layers, Ticket, Star, X, Wand2, Ruler, Plus, Target, Sparkles, CheckCheck, FileDown } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
 
@@ -134,7 +134,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
                 <SelectValue placeholder="Choisir un format" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="event_vip">Événement Standard (14x7cm)</SelectItem>
+                <SelectItem value="event_vip">Événement Standard VIP (14x7cm - 4/page)</SelectItem>
                 <SelectItem value="event">Événement Petit (10x7cm)</SelectItem>
                 <SelectItem value="raffle">Tombola Classique (10x5cm)</SelectItem>
                 <SelectItem value="custom">Format Manuel (Personnalisé)</SelectItem>
@@ -224,7 +224,6 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
               </div>
             </div>
 
-            {/* Individual Color for Active Numbering */}
             <div className="space-y-3 pt-3 border-t">
               <div className="flex items-center justify-between">
                 <Label className="text-xs uppercase font-bold text-muted-foreground">Style du Point N° {numberings.findIndex(n => n.id === config.activeNumberingId) + 1}</Label>
@@ -328,9 +327,12 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
         </div>
       </div>
 
-      <div className="pt-4 border-t">
+      <div className="pt-4 border-t space-y-3">
         <Button onClick={onPrint} className="w-full bg-primary hover:bg-primary/90 text-white h-14 text-xl shadow-xl transition-transform hover:scale-[1.01]">
-          <Printer className="w-6 h-6 mr-3" /> Générer les Tickets
+          <Printer className="w-6 h-6 mr-3" /> Imprimer les Tickets
+        </Button>
+        <Button onClick={onPrint} variant="outline" className="w-full h-12 text-accent font-bold gap-2 border-accent/20 hover:bg-accent/5">
+          <FileDown className="w-5 h-5" /> Exporter en PDF pour impression
         </Button>
       </div>
     </div>
