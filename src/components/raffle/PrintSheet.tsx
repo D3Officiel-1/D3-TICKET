@@ -39,17 +39,12 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
     const rows = Math.floor(pageH / h) || 1;
     const ticketsPerPage = cols * rows;
 
-    // Calcul des marges pour centrer la grille sur la page
-    const paddingX = (pageW - (cols * w)) / 2;
-    const paddingY = (pageH - (rows * h)) / 2;
-
     return {
       ticketsPerPage,
       cols,
+      rows,
       width: `${w}mm`,
-      height: `${h}mm`,
-      paddingY: `${paddingY}mm`,
-      paddingX: `${paddingX}mm`
+      height: `${h}mm`
     };
   }, [config.ticketWidth, config.ticketHeight]);
 
@@ -68,12 +63,8 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
         {pages.map((pageTickets, pageIdx) => (
           <div 
             key={`recto-page-${pageIdx}`} 
-            className="page-break-after h-[297mm] w-[210mm] grid content-start"
+            className="page-break-after h-[297mm] w-[210mm] grid place-content-center overflow-hidden"
             style={{ 
-              paddingTop: layout.paddingY, 
-              paddingBottom: layout.paddingY, 
-              paddingLeft: layout.paddingX, 
-              paddingRight: layout.paddingX,
               gridTemplateColumns: `repeat(${layout.cols}, ${layout.width})`,
               gridAutoRows: layout.height
             }}
@@ -86,7 +77,7 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
                   height: layout.height,
                   boxSizing: 'border-box'
                 }}
-                className="border-[0.1mm] border-gray-200 box-border overflow-hidden relative"
+                className="border-[0.1mm] border-gray-100 box-border overflow-hidden relative"
               >
                 <TicketPreview config={config} number={num} isPrintView={true} isVerso={false} />
               </div>
@@ -101,12 +92,8 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
           {pages.map((pageTickets, pageIdx) => (
             <div 
               key={`verso-page-${pageIdx}`} 
-              className="page-break-after h-[297mm] w-[210mm] grid content-start"
+              className="page-break-after h-[297mm] w-[210mm] grid place-content-center overflow-hidden"
               style={{ 
-                paddingTop: layout.paddingY, 
-                paddingBottom: layout.paddingY, 
-                paddingLeft: layout.paddingX, 
-                paddingRight: layout.paddingX,
                 gridTemplateColumns: `repeat(${layout.cols}, ${layout.width})`,
                 gridAutoRows: layout.height
               }}
@@ -119,7 +106,7 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
                     height: layout.height,
                     boxSizing: 'border-box'
                   }}
-                  className="border-[0.1mm] border-gray-200 box-border overflow-hidden relative"
+                  className="border-[0.1mm] border-gray-100 box-border overflow-hidden relative"
                 >
                   <TicketPreview config={config} number="" isPrintView={true} isVerso={true} />
                 </div>
