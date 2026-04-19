@@ -57,13 +57,13 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
   }, [tickets, layout.ticketsPerPage]);
 
   return (
-    <div className="hidden print:block bg-white w-[210mm] mx-auto">
+    <div id="print-sheet-container" className="hidden print:block bg-white w-[210mm] mx-auto">
       {/* SECTION RECTOS */}
       <div className="rectos-section">
         {pages.map((pageTickets, pageIdx) => (
           <div 
             key={`recto-page-${pageIdx}`} 
-            className="page-break-after h-[297mm] w-[210mm] grid place-content-center overflow-hidden"
+            className="page-break-after h-[297mm] w-[210mm] grid place-content-center overflow-hidden bg-white"
             style={{ 
               gridTemplateColumns: `repeat(${layout.cols}, ${layout.width})`,
               gridAutoRows: layout.height
@@ -92,7 +92,7 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
           {pages.map((pageTickets, pageIdx) => (
             <div 
               key={`verso-page-${pageIdx}`} 
-              className="page-break-after h-[297mm] w-[210mm] grid place-content-center overflow-hidden"
+              className="page-break-after h-[297mm] w-[210mm] grid place-content-center overflow-hidden bg-white"
               style={{ 
                 gridTemplateColumns: `repeat(${layout.cols}, ${layout.width})`,
                 gridAutoRows: layout.height

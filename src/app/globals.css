@@ -55,3 +55,13 @@
     break-after: page;
   }
 }
+
+/* Utile pour l'exportation PDF sans afficher à l'utilisateur */
+.export-active {
+  display: block !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: -20000px !important;
+  z-index: -100 !important;
+  visibility: visible !important;
+}

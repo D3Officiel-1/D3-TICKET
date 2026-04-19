@@ -8,9 +8,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Printer, Image as ImageIcon, Palette, Layers, Ticket, Star, X, Wand2, Ruler, Plus, Target, Sparkles, CheckCheck, FileDown } from 'lucide-react';
+import { Printer, Image as ImageIcon, Palette, Layers, Ticket, Star, X, Wand2, Ruler, Plus, Target, Sparkles, CheckCheck, FileDown, Loader2 } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 interface TicketFormProps {
   config: TicketConfig;
@@ -22,6 +22,8 @@ const LIBRARY_STORAGE_KEY = 'd3_tombola_library';
 
 export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrint }) => {
   const [localLibrary, setLocalLibrary] = useState<string[]>([]);
+  const [isExporting, setIsExporting] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     const saved = localStorage.getItem(LIBRARY_STORAGE_KEY);
@@ -113,6 +115,74 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
     }
 
     updateFields({ ticketType: type, ticketWidth: width, ticketHeight: height });
+  };
+
+  const handleExportPDF = async () => {
+    if (isExporting) return;
+    
+    try {
+      setIsExporting(true);
+      toast({
+        title: "Génération du PDF",
+        description: "Préparation de votre fichier d3-ticket.pdf (cela peut prendre quelques instants)...",
+      });
+
+      // Importation dynamique des bibliothèques lourdes
+      const { jsPDF } = await import('jspdf');
+      const html2canvas = (await import('html2canvas')).default;
+
+      const container = document.getElementById('print-sheet-container');
+      if (!container) throw new Error("Conteneur d'impression introuvable");
+
+      // Temporairement rendre le conteneur visible pour html2canvas mais hors écran
+      container.classList.remove('hidden');
+      container.classList.add('export-active');
+
+      const doc = new jsPDF({
+        orientation: 'p',
+        unit: 'mm',
+        format: 'a4',
+        compress: true
+      });
+
+      const pages = container.querySelectorAll('.page-break-after');
+      
+      for (let i = 0; i < pages.length; i++) {
+        const page = pages[i] as HTMLElement;
+        const canvas = await html2canvas(page, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          logging: false
+        });
+        
+        const imgData = canvas.toDataURL('image/jpeg', 0.85);
+        if (i > 0) doc.addPage();
+        doc.addImage(imgData, 'JPEG', 0, 0, 210, 297);
+      }
+
+      doc.save('d3-ticket.pdf');
+      
+      toast({
+        title: "Succès",
+        description: "Votre fichier d3-ticket.pdf a été téléchargé.",
+      });
+    } catch (error) {
+      console.error("Erreur d'exportation PDF:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la génération du PDF. Vérifiez votre connexion ou réduisez la quantité.",
+      });
+    } finally {
+      const container = document.getElementById('print-sheet-container');
+      if (container) {
+        container.classList.add('hidden');
+        container.classList.remove('export-active');
+      }
+      setIsExporting(false);
+    }
   };
 
   const backgroundPresets = PlaceHolderImages.filter(img => img.id.startsWith('bg-'));
@@ -331,8 +401,23 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
         <Button onClick={onPrint} className="w-full bg-primary hover:bg-primary/90 text-white h-14 text-xl shadow-xl transition-transform hover:scale-[1.01]">
           <Printer className="w-6 h-6 mr-3" /> Imprimer les Tickets
         </Button>
-        <Button onClick={onPrint} variant="outline" className="w-full h-12 text-accent font-bold gap-2 border-accent/20 hover:bg-accent/5">
-          <FileDown className="w-5 h-5" /> Exporter en PDF pour impression
+        <Button 
+          onClick={handleExportPDF} 
+          disabled={isExporting}
+          variant="outline" 
+          className="w-full h-12 text-accent font-bold gap-2 border-accent/20 hover:bg-accent/5"
+        >
+          {isExporting ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" />
+              Génération du fichier...
+            </>
+          ) : (
+            <>
+              <FileDown className="w-5 h-5" />
+              Télécharger le fichier PDF
+            </>
+          )}
         </Button>
       </div>
     </div>
