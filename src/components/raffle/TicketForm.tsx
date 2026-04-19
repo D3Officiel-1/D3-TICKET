@@ -22,7 +22,6 @@ const LIBRARY_STORAGE_KEY = 'd3_tombola_library';
 export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrint }) => {
   const [localLibrary, setLocalLibrary] = useState<string[]>([]);
 
-  // Load local library from localStorage
   useEffect(() => {
     const saved = localStorage.getItem(LIBRARY_STORAGE_KEY);
     if (saved) {
@@ -34,21 +33,22 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
     }
   }, []);
 
-  // Update field and manage library
-  const updateField = (field: keyof TicketConfig, value: any) => {
-    onChange({ ...config, [field]: value });
+  const updateFields = (updates: Partial<TicketConfig>) => {
+    const newConfig = { ...config, ...updates };
+    onChange(newConfig);
 
-    // If it's a URL field, try adding to library if valid
-    if ((field === 'backgroundImage' || field === 'versoBackgroundImage') && value) {
-      try {
-        new URL(value); // Check validity
-        if (!localLibrary.includes(value)) {
-          const newLib = [value, ...localLibrary].slice(0, 10); // Keep last 10
-          setLocalLibrary(newLib);
-          localStorage.setItem(LIBRARY_STORAGE_KEY, JSON.stringify(newLib));
-        }
-      } catch (e) {
-        // Invalid URL, ignore
+    // Si on met à jour une image, on l'ajoute à la bibliothèque
+    if (updates.backgroundImage || updates.versoBackgroundImage) {
+      const url = updates.backgroundImage || updates.versoBackgroundImage;
+      if (url) {
+        try {
+          new URL(url);
+          if (!localLibrary.includes(url)) {
+            const newLib = [url, ...localLibrary].slice(0, 10);
+            setLocalLibrary(newLib);
+            localStorage.setItem(LIBRARY_STORAGE_KEY, JSON.stringify(newLib));
+          }
+        } catch (e) {}
       }
     }
   };
@@ -72,12 +72,18 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
         break;
     }
 
-    onChange({
-      ...config,
+    updateFields({
       ticketType: type,
       ticketWidth: width,
       ticketHeight: height
     });
+  };
+
+  const removeFromLibrary = (url: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newLib = localLibrary.filter(item => item !== url);
+    setLocalLibrary(newLib);
+    localStorage.setItem(LIBRARY_STORAGE_KEY, JSON.stringify(newLib));
   };
 
   const backgroundPresets = PlaceHolderImages.filter(img => img.id.startsWith('bg-'));
@@ -90,7 +96,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
         </h2>
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label>Type de ticket</Label>
+            <Label>Profil de format</Label>
             <Select 
               value={config.ticketType} 
               onValueChange={(v: TicketType) => handleTypeChange(v)}
@@ -107,7 +113,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
                 </SelectItem>
                 <SelectItem value="event">Événement Petit (10x7cm)</SelectItem>
                 <SelectItem value="raffle">Tombola Classique (10x5cm)</SelectItem>
-                <SelectItem value="custom">Format Personnalisé</SelectItem>
+                <SelectItem value="custom">Format Manuel (Personnalisé)</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -121,10 +127,10 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
                 type="number"
                 value={config.ticketWidth}
                 onChange={(e) => {
-                  updateField('ticketWidth', Math.max(10, parseInt(e.target.value) || 0));
-                  updateField('ticketType', 'custom');
+                  const val = Math.max(10, parseInt(e.target.value) || 0);
+                  updateFields({ ticketWidth: val, ticketType: 'custom' });
                 }}
-                className="font-bold"
+                className="font-bold bg-white"
               />
             </div>
             <div className="space-y-2">
@@ -135,16 +141,11 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
                 type="number"
                 value={config.ticketHeight}
                 onChange={(e) => {
-                  updateField('ticketHeight', Math.max(10, parseInt(e.target.value) || 0));
-                  updateField('ticketType', 'custom');
+                  const val = Math.max(10, parseInt(e.target.value) || 0);
+                  updateFields({ ticketHeight: val, ticketType: 'custom' });
                 }}
-                className="font-bold"
+                className="font-bold bg-white"
               />
-            </div>
-            <div className="col-span-2 pt-2">
-              <p className="text-[11px] text-muted-foreground italic">
-                {config.ticketType !== 'custom' ? "Dimensions réglées par le profil." : "Mode manuel activé."}
-              </p>
             </div>
           </div>
         </div>
@@ -162,7 +163,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
                 variant={config.autoContrast ? "default" : "outline"}
                 size="sm"
                 className="h-7 text-[10px] gap-1 px-2 uppercase font-black tracking-tighter"
-                onClick={() => updateField('autoContrast', !config.autoContrast)}
+                onClick={() => updateFields({ autoContrast: !config.autoContrast })}
               >
                 <Wand2 className="w-3 h-3" />
                 {config.autoContrast ? "Contraste Auto : ON" : "Activer Contraste Auto"}
@@ -174,15 +175,13 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
                 className="w-12 p-1 cursor-pointer h-10"
                 value={config.color} 
                 onChange={(e) => {
-                  updateField('color', e.target.value);
-                  updateField('autoContrast', false);
+                  updateFields({ color: e.target.value, autoContrast: false });
                 }}
               />
               <Input 
                 value={config.color} 
                 onChange={(e) => {
-                  updateField('color', e.target.value);
-                  updateField('autoContrast', false);
+                  updateFields({ color: e.target.value, autoContrast: false });
                 }}
                 placeholder="#000000"
                 className="font-mono"
@@ -202,7 +201,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
               <Label>URL de votre design</Label>
               <Input 
                 value={config.backgroundImage} 
-                onChange={(e) => updateField('backgroundImage', e.target.value)}
+                onChange={(e) => updateFields({ backgroundImage: e.target.value })}
                 placeholder="https://votre-image.jpg"
                 className="bg-muted/30"
               />
@@ -220,7 +219,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
                         variant="outline" 
                         size="sm"
                         className="h-12 w-20 overflow-hidden p-0 relative border-accent/20"
-                        onClick={() => updateField('backgroundImage', url)}
+                        onClick={() => updateFields({ backgroundImage: url })}
                       >
                         <img src={url} alt="Library item" className="w-full h-full object-cover" />
                       </Button>
@@ -240,7 +239,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
               <Button 
                 variant={config.backgroundImage === "" ? "default" : "outline"} 
                 className="text-xs h-16 flex flex-col gap-1"
-                onClick={() => updateField('backgroundImage', "")}
+                onClick={() => updateFields({ backgroundImage: "" })}
               >
                 Aucun
               </Button>
@@ -249,7 +248,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
                   key={bg.id}
                   variant={config.backgroundImage === bg.imageUrl ? "default" : "outline"}
                   className="text-xs h-16 flex flex-col gap-1 overflow-hidden p-0 relative"
-                  onClick={() => updateField('backgroundImage', bg.imageUrl)}
+                  onClick={() => updateFields({ backgroundImage: bg.imageUrl })}
                 >
                   <img src={bg.imageUrl} alt={bg.description} className="absolute inset-0 w-full h-full object-cover opacity-40" />
                   <span className="relative z-10 bg-white/80 px-1 rounded font-bold">{bg.description.split(' ')[1]}</span>
@@ -269,7 +268,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
             </div>
             <Switch 
               checked={config.hasVerso} 
-              onCheckedChange={(val) => updateField('hasVerso', val)}
+              onCheckedChange={(val) => updateFields({ hasVerso: val })}
             />
           </div>
           
@@ -279,7 +278,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
                 <Label>Image du Verso (URL)</Label>
                 <Input 
                   value={config.versoBackgroundImage} 
-                  onChange={(e) => updateField('versoBackgroundImage', e.target.value)}
+                  onChange={(e) => updateFields({ versoBackgroundImage: e.target.value })}
                   placeholder="https://votre-image-dos.jpg"
                   className="bg-white"
                 />
@@ -299,7 +298,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
             <Input 
               type="number"
               value={config.quantity} 
-              onChange={(e) => updateField('quantity', Math.max(1, parseInt(e.target.value) || 1))}
+              onChange={(e) => updateFields({ quantity: Math.max(1, parseInt(e.target.value) || 1) })}
             />
           </div>
           <div className="space-y-2">
@@ -307,7 +306,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
             <Input 
               type="number"
               value={config.startingNumber} 
-              onChange={(e) => updateField('startingNumber', Math.max(0, parseInt(e.target.value) || 0))}
+              onChange={(e) => updateFields({ startingNumber: Math.max(0, parseInt(e.target.value) || 0) })}
             />
           </div>
 
@@ -318,7 +317,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
               </Label>
               <Input 
                 value={config.numberPrefix} 
-                onChange={(e) => updateField('numberPrefix', e.target.value)}
+                onChange={(e) => updateFields({ numberPrefix: e.target.value })}
                 placeholder="Ex: VIP-"
                 className="font-mono text-xs"
               />
@@ -329,7 +328,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
               </Label>
               <Input 
                 value={config.numberSuffix} 
-                onChange={(e) => updateField('numberSuffix', e.target.value)}
+                onChange={(e) => updateFields({ numberSuffix: e.target.value })}
                 placeholder="Ex: -2024"
                 className="font-mono text-xs"
               />
@@ -340,7 +339,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
             <Label>Type de génération</Label>
             <Select 
               value={config.generationMode} 
-              onValueChange={(v) => updateField('generationMode', v)}
+              onValueChange={(v) => updateFields({ generationMode: v as any })}
             >
               <SelectTrigger>
                 <SelectValue />

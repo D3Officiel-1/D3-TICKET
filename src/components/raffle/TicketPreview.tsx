@@ -57,7 +57,6 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
       const x = Math.floor(config.numberX);
       const y = Math.floor(config.numberY);
 
-      // Sample a small area around the number position
       const sampleSize = 5;
       const data = ctx.getImageData(
         Math.max(0, x - sampleSize), 
@@ -68,7 +67,6 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
 
       let totalLuminance = 0;
       for (let i = 0; i < data.length; i += 4) {
-        // Luminance calculation: 0.299R + 0.587G + 0.114B
         const r = data[i];
         const g = data[i + 1];
         const b = data[i + 2];
@@ -76,8 +74,6 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
       }
 
       const avgLuminance = totalLuminance / (data.length / 4);
-      
-      // If dark background, use white. If light background, use black.
       const bestColor = avgLuminance > 128 ? "#000000" : "#FFFFFF";
       
       if (config.color !== bestColor) {
@@ -126,40 +122,23 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey) {
-        // Handle Size (+ / -)
         if (e.key === '+' || e.key === '=' || e.key === '-') {
           e.preventDefault();
           const step = 2;
           const currentSize = config.numberSize || 24;
           let newSize = currentSize;
-
-          if (e.key === '+' || e.key === '=') {
-            newSize = Math.min(150, currentSize + step);
-          } else if (e.key === '-') {
-            newSize = Math.max(6, currentSize - step);
-          }
-
-          if (newSize !== currentSize) {
-            onConfigChange({ ...config, numberSize: newSize });
-          }
+          if (e.key === '+' || e.key === '=') newSize = Math.min(150, currentSize + step);
+          else if (e.key === '-') newSize = Math.max(6, currentSize - step);
+          if (newSize !== currentSize) onConfigChange({ ...config, numberSize: newSize });
         }
-
-        // Handle Rotation (Left / Right)
         if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
           e.preventDefault();
-          const step = 5; // Degrees
+          const step = 5;
           const currentRotation = config.numberRotation || 0;
           let newRotation = currentRotation;
-
-          if (e.key === 'ArrowRight') {
-            newRotation = (currentRotation + step) % 360;
-          } else if (e.key === 'ArrowLeft') {
-            newRotation = (currentRotation - step + 360) % 360;
-          }
-
-          if (newRotation !== currentRotation) {
-            onConfigChange({ ...config, numberRotation: newRotation });
-          }
+          if (e.key === 'ArrowRight') newRotation = (currentRotation + step) % 360;
+          else if (e.key === 'ArrowLeft') newRotation = (currentRotation - step + 360) % 360;
+          if (newRotation !== currentRotation) onConfigChange({ ...config, numberRotation: newRotation });
         }
       }
     };
@@ -188,9 +167,11 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
       height: '100%'
     };
     
-    // Aspect ratios based on manual or preset dimensions
-    const ratio = (config.ticketHeight || 70) / (config.ticketWidth || 140);
-    const maxWidth = 600;
+    // On calcule le ratio réel basé sur les mm saisis
+    const w = config.ticketWidth || 140;
+    const h = config.ticketHeight || 70;
+    const ratio = h / w;
+    const maxWidth = 550; // Limite visuelle dans l'interface
     
     return {
       width: `${maxWidth}px`,
@@ -200,8 +181,6 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
 
   const fontSize = useMemo(() => {
     const base = config.numberSize || 24;
-    // Sur l'impression, on convertit les points en fonction de la taille réelle si nécessaire
-    // Ici on garde une proportionnelle standard pour la lisibilité
     return isPrintView ? `${base * 0.75}pt` : `${base}pt`;
   }, [config.numberSize, isPrintView]);
 
@@ -209,7 +188,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
     <div 
       ref={containerRef}
       className={cn(
-        "relative bg-white overflow-hidden",
+        "relative bg-white overflow-hidden transition-all duration-300",
         isPrintView 
           ? "" 
           : "shadow-2xl rounded-xl group select-none cursor-move",
@@ -261,7 +240,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
         <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity pointer-events-none">
           <div className="flex flex-col items-center gap-2">
             <span className="bg-white/95 text-accent px-4 py-2 rounded-full font-bold shadow-lg border border-accent/20">
-              Glissez pour placer le numéro
+              Position: {config.ticketWidth}x{config.ticketHeight}mm
             </span>
             <div className="flex flex-wrap justify-center gap-1">
               <span className="bg-primary/95 text-white text-[11px] px-3 py-1 rounded-full font-bold shadow-md">
