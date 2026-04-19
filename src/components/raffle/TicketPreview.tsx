@@ -37,6 +37,16 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
     }
   }, [imageUrl]);
 
+  // Calcule le facteur d'échelle pour que le prototype (550px) corresponde proportionnellement au rendu réel (en mm)
+  const fontScaleFactor = useMemo(() => {
+    if (isPrintView) return 1;
+    const wMm = config.ticketWidth || 140;
+    // 1mm = 3.7795 px environ à 96dpi
+    const naturalWidthPx = wMm * 3.7795275591;
+    const displayWidthPx = 550; // Largeur du conteneur de preview
+    return displayWidthPx / naturalWidthPx;
+  }, [config.ticketWidth, isPrintView]);
+
   const detectBestColorForPoint = useCallback((num: NumberingInstance, img: HTMLImageElement) => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
@@ -220,6 +230,9 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
 
       {!isVerso && displayValue !== "" && numberings.map((num) => {
         const currentColor = num.color || config.color;
+        // La taille est multipliée par fontScaleFactor en preview pour rester proportionnelle
+        const finalSize = num.size * fontScaleFactor;
+        
         return (
           <div 
             key={num.id}
@@ -239,7 +252,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
               top: `${num.y}%`,
               transform: `translate(-50%, -50%) rotate(${num.rotation || 0}deg)`,
               color: currentColor,
-              fontSize: `${num.size}pt`,
+              fontSize: `${finalSize}pt`,
               textShadow: currentColor === "#FFFFFF" 
                 ? '0 0 3px black, 0 0 6px rgba(0,0,0,0.5)' 
                 : '0 0 3px white, 0 0 6px rgba(255,255,255,0.5)'
