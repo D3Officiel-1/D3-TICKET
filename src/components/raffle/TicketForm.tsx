@@ -150,14 +150,22 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
       for (let i = 0; i < pages.length; i++) {
         const page = pages[i] as HTMLElement;
         const canvas = await html2canvas(page, {
-          scale: 2,
+          scale: 3, // Augmentation de la qualité
           useCORS: true,
           allowTaint: true,
           backgroundColor: '#ffffff',
-          logging: false
+          logging: false,
+          onclone: (clonedDoc) => {
+            // S'assurer que les polices et images sont bien chargées dans le clone
+            const clonedContainer = clonedDoc.getElementById('print-sheet-container');
+            if (clonedContainer) {
+              clonedContainer.style.display = 'block';
+              clonedContainer.style.visibility = 'visible';
+            }
+          }
         });
         
-        const imgData = canvas.toDataURL('image/jpeg', 0.85);
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
         if (i > 0) doc.addPage();
         doc.addImage(imgData, 'JPEG', 0, 0, 210, 297);
       }

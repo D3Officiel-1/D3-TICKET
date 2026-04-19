@@ -239,7 +239,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
               top: `${num.y}%`,
               transform: `translate(-50%, -50%) rotate(${num.rotation || 0}deg)`,
               color: currentColor,
-              fontSize: isPrintView ? `${num.size * 0.75}pt` : `${num.size}pt`,
+              fontSize: `${num.size}pt`,
               textShadow: currentColor === "#FFFFFF" 
                 ? '0 0 3px black, 0 0 6px rgba(0,0,0,0.5)' 
                 : '0 0 3px white, 0 0 6px rgba(255,255,255,0.5)'
