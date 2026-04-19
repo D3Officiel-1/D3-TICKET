@@ -27,37 +27,49 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
   }, [config.quantity, config.startingNumber, config.generationMode]);
 
   const layout = useMemo(() => {
-    switch (config.ticketType) {
-      case 'event_vip':
-        return {
-          ticketsPerPage: 4,
-          cols: 1,
-          width: '140mm',
-          height: '70mm',
-          paddingY: '8.5mm',
-          paddingX: '35mm'
-        };
-      case 'event':
-        return {
-          ticketsPerPage: 8,
-          cols: 2,
-          width: '100mm',
-          height: '70mm',
-          paddingY: '8.5mm',
-          paddingX: '5mm' 
-        };
-      case 'raffle':
-      default:
-        return {
-          ticketsPerPage: 10,
-          cols: 2,
-          width: '100mm',
-          height: '50mm',
-          paddingY: '23.5mm',
-          paddingX: '5mm' 
-        };
+    const w = config.ticketWidth || 140;
+    const h = config.ticketHeight || 70;
+
+    // Détermination heuristique du nombre par page si non prédéfini
+    let ticketsPerPage = 10;
+    let cols = 2;
+    let paddingY = '15mm';
+    let paddingX = '5mm';
+
+    if (config.ticketType === 'event_vip') {
+      ticketsPerPage = 4;
+      cols = 1;
+      paddingY = '8.5mm';
+      paddingX = '35mm';
+    } else if (config.ticketType === 'event') {
+      ticketsPerPage = 8;
+      cols = 2;
+      paddingY = '8.5mm';
+      paddingX = '5mm';
+    } else if (config.ticketType === 'raffle') {
+      ticketsPerPage = 10;
+      cols = 2;
+      paddingY = '23.5mm';
+      paddingX = '5mm';
+    } else {
+      // Calcul automatique simplifié pour le mode personnalisé sur A4 (210x297mm)
+      const fitsX = Math.floor(200 / w) || 1;
+      const fitsY = Math.floor(280 / h) || 1;
+      cols = fitsX;
+      ticketsPerPage = fitsX * fitsY;
+      paddingX = `${(210 - (fitsX * w)) / 2}mm`;
+      paddingY = `${(297 - (fitsY * h)) / 2}mm`;
     }
-  }, [config.ticketType]);
+
+    return {
+      ticketsPerPage,
+      cols,
+      width: `${w}mm`,
+      height: `${h}mm`,
+      paddingY,
+      paddingX
+    };
+  }, [config.ticketType, config.ticketWidth, config.ticketHeight]);
 
   const pages = useMemo(() => {
     const p = [];

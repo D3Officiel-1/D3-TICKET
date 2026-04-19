@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Settings2, Sparkles, Printer, Image as ImageIcon, Palette, Layers, Ticket, Star, History, X, Wand2, Hash } from 'lucide-react';
+import { Settings2, Sparkles, Printer, Image as ImageIcon, Palette, Layers, Ticket, Star, History, X, Wand2, Hash, Ruler } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 interface TicketFormProps {
@@ -53,11 +53,31 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
     }
   };
 
-  const removeFromLibrary = (url: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const newLib = localLibrary.filter(item => item !== url);
-    setLocalLibrary(newLib);
-    localStorage.setItem(LIBRARY_STORAGE_KEY, JSON.stringify(newLib));
+  const handleTypeChange = (type: TicketType) => {
+    let width = config.ticketWidth;
+    let height = config.ticketHeight;
+
+    switch (type) {
+      case 'event_vip':
+        width = 140;
+        height = 70;
+        break;
+      case 'event':
+        width = 100;
+        height = 70;
+        break;
+      case 'raffle':
+        width = 100;
+        height = 50;
+        break;
+    }
+
+    onChange({
+      ...config,
+      ticketType: type,
+      ticketWidth: width,
+      ticketHeight: height
+    });
   };
 
   const backgroundPresets = PlaceHolderImages.filter(img => img.id.startsWith('bg-'));
@@ -66,14 +86,14 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
     <div className="space-y-8 bg-white p-6 rounded-2xl shadow-sm border border-border">
       <div>
         <h2 className="text-xl font-bold flex items-center gap-2 mb-6 text-accent">
-          <Ticket className="w-5 h-5" /> Type de Ticket
+          <Ticket className="w-5 h-5" /> Format du Ticket
         </h2>
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label>Format du ticket</Label>
+            <Label>Type de ticket</Label>
             <Select 
               value={config.ticketType} 
-              onValueChange={(v: TicketType) => updateField('ticketType', v)}
+              onValueChange={(v: TicketType) => handleTypeChange(v)}
             >
               <SelectTrigger className="w-full h-12 font-bold">
                 <SelectValue placeholder="Choisir un format" />
@@ -82,18 +102,48 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
                 <SelectItem value="event_vip">
                   <div className="flex items-center gap-2">
                     <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                    <span>Événement Standard VIP (14x7cm - 4/page)</span>
+                    <span>Événement Standard VIP (14x7cm)</span>
                   </div>
                 </SelectItem>
-                <SelectItem value="event">Événement Petit (10x7cm - 8/page)</SelectItem>
-                <SelectItem value="raffle">Tombola Classique (10x5cm - 10/page)</SelectItem>
+                <SelectItem value="event">Événement Petit (10x7cm)</SelectItem>
+                <SelectItem value="raffle">Tombola Classique (10x5cm)</SelectItem>
+                <SelectItem value="custom">Format Personnalisé</SelectItem>
               </SelectContent>
             </Select>
-            <div className="p-3 bg-primary/5 rounded-lg border border-primary/10 mt-2">
-              <p className="text-[12px] text-primary font-medium leading-tight">
-                {config.ticketType === 'event_vip' && "Format VIP large (14x7cm), idéal pour festivals. 4 par page."}
-                {config.ticketType === 'event' && "Format 10x7cm. Optimisé avec 8 tickets par page."}
-                {config.ticketType === 'raffle' && "Format standard tombola 10x5cm. 10 par page."}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 p-4 bg-accent/5 rounded-xl border border-accent/10">
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2 text-accent">
+                <Ruler className="w-4 h-4" /> Largeur (mm)
+              </Label>
+              <Input 
+                type="number"
+                value={config.ticketWidth}
+                onChange={(e) => {
+                  updateField('ticketWidth', Math.max(10, parseInt(e.target.value) || 0));
+                  updateField('ticketType', 'custom');
+                }}
+                className="font-bold"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2 text-accent">
+                <Ruler className="w-4 h-4 rotate-90" /> Hauteur (mm)
+              </Label>
+              <Input 
+                type="number"
+                value={config.ticketHeight}
+                onChange={(e) => {
+                  updateField('ticketHeight', Math.max(10, parseInt(e.target.value) || 0));
+                  updateField('ticketType', 'custom');
+                }}
+                className="font-bold"
+              />
+            </div>
+            <div className="col-span-2 pt-2">
+              <p className="text-[11px] text-muted-foreground italic">
+                {config.ticketType !== 'custom' ? "Dimensions réglées par le profil." : "Mode manuel activé."}
               </p>
             </div>
           </div>
@@ -161,7 +211,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
             {localLibrary.length > 0 && (
               <div className="space-y-2">
                 <Label className="text-[11px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                  <History className="w-3 h-3" /> Bibliothèque locale (Dernières images utilisées)
+                  <History className="w-3 h-3" /> Bibliothèque locale
                 </Label>
                 <div className="flex flex-wrap gap-2">
                   {localLibrary.map((url, i) => (
@@ -234,21 +284,6 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
                   className="bg-white"
                 />
               </div>
-              {localLibrary.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {localLibrary.slice(0, 5).map((url, i) => (
-                    <Button 
-                      key={`verso-lib-${i}`}
-                      variant="outline" 
-                      size="sm"
-                      className="h-10 w-16 overflow-hidden p-0"
-                      onClick={() => updateField('versoBackgroundImage', url)}
-                    >
-                      <img src={url} alt="Library item" className="w-full h-full object-cover opacity-60" />
-                    </Button>
-                  ))}
-                </div>
-              )}
             </div>
           )}
         </div>
@@ -279,7 +314,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
           <div className="md:col-span-2 grid grid-cols-2 gap-4 pt-2">
             <div className="space-y-2">
               <Label className="flex items-center gap-1.5">
-                <Hash className="w-3 h-3" /> Préfixe (ex: VIP-)
+                <Hash className="w-3 h-3" /> Préfixe
               </Label>
               <Input 
                 value={config.numberPrefix} 
@@ -290,7 +325,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
             </div>
             <div className="space-y-2">
               <Label className="flex items-center gap-1.5">
-                <Hash className="w-3 h-3 rotate-12" /> Suffixe (ex: -A)
+                <Hash className="w-3 h-3 rotate-12" /> Suffixe
               </Label>
               <Input 
                 value={config.numberSuffix} 

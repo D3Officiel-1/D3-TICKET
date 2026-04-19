@@ -185,17 +185,15 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
   const previewStyles = useMemo(() => {
     if (isPrintView) return {};
     
-    // Aspect ratios based on physical dimensions
-    let ratio = 5/10; // Raffle default
-    if (config.ticketType === 'event_vip') ratio = 7/14; 
-    if (config.ticketType === 'event') ratio = 7/10;
-
-    const width = config.ticketType === 'event_vip' ? 650 : 600;
+    // Aspect ratios based on manual or preset dimensions
+    const ratio = (config.ticketHeight || 70) / (config.ticketWidth || 140);
+    const maxWidth = 600;
+    
     return {
-      width: `${width}px`,
-      height: `${width * ratio}px`
+      width: `${maxWidth}px`,
+      height: `${maxWidth * ratio}px`
     };
-  }, [config.ticketType, isPrintView]);
+  }, [config.ticketWidth, config.ticketHeight, isPrintView]);
 
   const fontSize = useMemo(() => {
     const base = config.numberSize || 24;
@@ -228,9 +226,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
         <div className="absolute inset-0 bg-muted/20 flex flex-col items-center justify-center text-muted-foreground font-bold text-sm h-full p-4 text-center">
           <p>{isVerso ? "Design du Verso" : "Design du Recto"}</p>
           <p className="text-[10px] font-normal mt-2 opacity-60">
-            {config.ticketType === 'event_vip' && "Format VIP (14x7cm)"}
-            {config.ticketType === 'event' && "Format Évènement (10x7cm)"}
-            {config.ticketType === 'raffle' && "Format Tombola (10x5cm)"}
+            Dimensions: {config.ticketWidth}mm x {config.ticketHeight}mm
           </p>
         </div>
       )}

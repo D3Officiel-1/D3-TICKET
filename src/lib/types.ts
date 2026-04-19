@@ -1,5 +1,5 @@
 
-export type TicketType = 'event_vip' | 'event' | 'raffle';
+export type TicketType = 'event_vip' | 'event' | 'raffle' | 'custom';
 
 export interface TicketConfig {
   startingNumber: number;
@@ -17,6 +17,8 @@ export interface TicketConfig {
   autoContrast?: boolean;
   numberPrefix?: string;
   numberSuffix?: string;
+  ticketWidth: number; // en mm
+  ticketHeight: number; // en mm
 }
 
 export const DEFAULT_CONFIG: TicketConfig = {
@@ -35,4 +37,6 @@ export const DEFAULT_CONFIG: TicketConfig = {
   autoContrast: false,
   numberPrefix: "",
   numberSuffix: "",
+  ticketWidth: 140,
+  ticketHeight: 70,
 };
