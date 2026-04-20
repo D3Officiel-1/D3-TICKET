@@ -6,10 +6,12 @@ import { TicketConfig, DEFAULT_CONFIG } from '@/lib/types';
 import { TicketForm } from '@/components/raffle/TicketForm';
 import { TicketPreview } from '@/components/raffle/TicketPreview';
 import { PrintSheet } from '@/components/raffle/PrintSheet';
-import { Ticket, Star, MousePointer2, Layers, Repeat, Lock } from 'lucide-react';
+import { Ticket, Star, MousePointer2, Layers, Repeat, Lock, ShieldCheck, KeyRound, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 const STORAGE_KEY = 'd3_tombola_config';
 
@@ -17,12 +19,14 @@ export default function Home() {
   const [config, setConfig] = useState<TicketConfig>(DEFAULT_CONFIG);
   const [activeFace, setActiveFace] = useState<'recto' | 'verso'>('recto');
   const [isLoaded, setIsLoaded] = useState(false);
+  const { toast } = useToast();
   
-  // Security sequence state
-  const [showAccessAlert, setShowAccessAlert] = useState(true);
+  // Security state
+  const [securityStage, setSecurityStage] = useState<'clicks' | 'password' | 'unlocked'>('clicks');
   const [lockClicks, setLockClicks] = useState(0);
   const [titleClicks, setTitleClicks] = useState(0);
   const [descClicks, setDescClicks] = useState(0);
+  const [passwordInput, setPasswordInput] = useState('');
 
   // Load config from localStorage on mount
   useEffect(() => {
@@ -65,26 +69,48 @@ export default function Home() {
     if (!newHasVerso) setActiveFace('recto');
   };
 
-  // Security Logic
+  // Security Logic - Stage 1 (Clicks)
   const handleLockClick = () => {
+    if (securityStage !== 'clicks') return;
     if (lockClicks < 3) {
       setLockClicks(prev => prev + 1);
     }
   };
 
   const handleTitleClick = () => {
+    if (securityStage !== 'clicks') return;
     if (lockClicks === 3 && titleClicks < 2) {
       setTitleClicks(prev => prev + 1);
     }
   };
 
   const handleDescClick = () => {
+    if (securityStage !== 'clicks') return;
     if (lockClicks === 3 && titleClicks === 2 && descClicks < 4) {
       const nextCount = descClicks + 1;
       setDescClicks(nextCount);
       if (nextCount === 4) {
-        setShowAccessAlert(false);
+        setSecurityStage('password');
       }
+    }
+  };
+
+  // Security Logic - Stage 2 (Password)
+  const handlePasswordSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (passwordInput === 'De3691215') {
+      setSecurityStage('unlocked');
+      toast({
+        title: "Accès autorisé",
+        description: "Bienvenue sur D3 TICKET.",
+      });
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Mot de passe incorrect",
+        description: "Veuillez réessayer.",
+      });
+      setPasswordInput('');
     }
   };
 
@@ -92,55 +118,81 @@ export default function Home() {
 
   return (
     <main className="min-h-screen pb-20">
-      {/* Full Screen Access Restriction Overlay */}
-      {showAccessAlert && (
+      {/* Security Overlays */}
+      {securityStage !== 'unlocked' && (
         <div className="fixed inset-0 z-[9999] bg-background flex items-center justify-center p-4">
-          <div className="max-w-md w-full bg-white border-2 border-primary/20 rounded-[2.5rem] p-10 shadow-2xl flex flex-col items-center text-center space-y-8 animate-in fade-in zoom-in duration-500">
-            {/* Step 1: Lock Icon */}
-            <div 
-              onClick={handleLockClick}
-              className={cn(
-                "cursor-pointer p-6 rounded-3xl transition-all duration-300",
-                lockClicks > 0 ? "bg-primary/20 scale-110" : "bg-primary/10 hover:bg-primary/15"
-              )}
-            >
-              <Lock className={cn(
-                "w-16 h-16 transition-colors",
-                lockClicks === 3 ? "text-primary" : "text-primary/60"
-              )} />
-            </div>
-
-            <div className="space-y-4">
-              {/* Step 2: Title */}
-              <h1 
-                onClick={handleTitleClick}
+          {securityStage === 'clicks' ? (
+            <div className="max-w-md w-full bg-white border-2 border-primary/20 rounded-[2.5rem] p-10 shadow-2xl flex flex-col items-center text-center space-y-8 animate-in fade-in zoom-in duration-500">
+              <div 
+                onClick={handleLockClick}
                 className={cn(
-                  "text-3xl font-black uppercase tracking-tight transition-colors cursor-default select-none",
-                  titleClicks > 0 ? "text-accent" : "text-accent/40"
+                  "cursor-pointer p-6 rounded-3xl transition-all duration-300",
+                  lockClicks > 0 ? "bg-primary/20 scale-110" : "bg-primary/10 hover:bg-primary/15"
                 )}
               >
-                Accès Restreint
-              </h1>
+                <Lock className={cn(
+                  "w-16 h-16 transition-colors",
+                  lockClicks === 3 ? "text-primary" : "text-primary/60"
+                )} />
+              </div>
 
-              {/* Step 3: Description */}
-              <p 
-                onClick={handleDescClick}
-                className={cn(
-                  "text-lg font-medium leading-relaxed transition-colors cursor-default select-none",
-                  descClicks > 0 ? "text-muted-foreground" : "text-muted-foreground/30"
-                )}
-              >
-                Cette application est totalement privée. L'accès est strictement réservé aux personnes autorisées. Toute utilisation non autorisée est interdite.
-              </p>
-            </div>
+              <div className="space-y-4">
+                <h1 
+                  onClick={handleTitleClick}
+                  className={cn(
+                    "text-3xl font-black uppercase tracking-tight transition-colors cursor-default select-none",
+                    titleClicks > 0 ? "text-accent" : "text-accent/40"
+                  )}
+                >
+                  Accès Restreint
+                </h1>
 
-            {/* Hidden Progress Feedback for Debugging/Support */}
-            <div className="flex gap-1 opacity-10">
-              <div className={cn("w-2 h-2 rounded-full", lockClicks === 3 ? "bg-green-500" : "bg-gray-300")} />
-              <div className={cn("w-2 h-2 rounded-full", titleClicks === 2 ? "bg-green-500" : "bg-gray-300")} />
-              <div className={cn("w-2 h-2 rounded-full", descClicks === 4 ? "bg-green-500" : "bg-gray-300")} />
+                <p 
+                  onClick={handleDescClick}
+                  className={cn(
+                    "text-lg font-medium leading-relaxed transition-colors cursor-default select-none",
+                    descClicks > 0 ? "text-muted-foreground" : "text-muted-foreground/30"
+                  )}
+                >
+                  Cette application est totalement privée. L'accès est strictement réservé aux personnes autorisées. Toute utilisation non autorisée est interdite.
+                </p>
+              </div>
+
+              <div className="flex gap-1 opacity-5">
+                <div className={cn("w-2 h-2 rounded-full", lockClicks === 3 ? "bg-green-500" : "bg-gray-300")} />
+                <div className={cn("w-2 h-2 rounded-full", titleClicks === 2 ? "bg-green-500" : "bg-gray-300")} />
+                <div className={cn("w-2 h-2 rounded-full", descClicks === 4 ? "bg-green-500" : "bg-gray-300")} />
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="max-w-md w-full bg-white border-2 border-primary/20 rounded-[2.5rem] p-10 shadow-2xl flex flex-col items-center text-center space-y-8 animate-in fade-in slide-in-from-bottom-10 duration-500">
+              <div className="bg-primary/10 p-6 rounded-3xl">
+                <ShieldCheck className="w-16 h-16 text-primary" />
+              </div>
+
+              <div className="space-y-2">
+                <h2 className="text-2xl font-black text-accent uppercase tracking-tight">Vérification Requise</h2>
+                <p className="text-muted-foreground font-medium">Saisissez le code d'accès pour continuer.</p>
+              </div>
+
+              <form onSubmit={handlePasswordSubmit} className="w-full space-y-4">
+                <div className="relative">
+                  <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input 
+                    type="password"
+                    placeholder="Mot de passe"
+                    value={passwordInput}
+                    onChange={(e) => setPasswordInput(e.target.value)}
+                    className="pl-12 h-14 text-lg font-bold rounded-2xl border-2 focus:border-primary transition-all"
+                    autoFocus
+                  />
+                </div>
+                <Button type="submit" className="w-full h-14 text-lg font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20 transition-transform active:scale-95">
+                  Déverrouiller <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </form>
+            </div>
+          )}
         </div>
       )}
 
