@@ -27,6 +27,7 @@ export interface TicketConfig {
   numberSuffix?: string;
   ticketWidth: number; // en mm
   ticketHeight: number; // en mm
+  showNumbering: boolean;
 }
 
 export const DEFAULT_CONFIG: TicketConfig = {
@@ -47,4 +48,5 @@ export const DEFAULT_CONFIG: TicketConfig = {
   numberSuffix: "",
   ticketWidth: 140,
   ticketHeight: 70,
+  showNumbering: true,
 };

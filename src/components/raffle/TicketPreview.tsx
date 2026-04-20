@@ -110,7 +110,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
   }, [imageUrl, isValidUrl, isVerso, config, onConfigChange, numberings, detectBestColorForPoint]);
 
   const updatePosition = useCallback((clientX: number, clientY: number) => {
-    if (!containerRef.current || !onConfigChange || isVerso) return;
+    if (!containerRef.current || !onConfigChange || isVerso || !config.showNumbering) return;
 
     const rect = containerRef.current.getBoundingClientRect();
     const x = ((clientX - rect.left) / rect.width) * 100;
@@ -126,7 +126,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
   }, [config, onConfigChange, isVerso, numberings]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (isPrintView || !onConfigChange || isVerso) return;
+    if (isPrintView || !onConfigChange || isVerso || !config.showNumbering) return;
     setIsDragging(true);
     updatePosition(e.clientX, e.clientY);
   };
@@ -141,7 +141,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
   }, []);
 
   useEffect(() => {
-    if (isPrintView || !onConfigChange || isVerso) return;
+    if (isPrintView || !onConfigChange || isVerso || !config.showNumbering) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       const activeNum = numberings.find(n => n.id === config.activeNumberingId);
@@ -162,7 +162,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
         }
         if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
           e.preventDefault();
-          const step = 5;
+          const step = 1;
           let newRotation = activeNum.rotation;
           if (e.key === 'ArrowRight') newRotation = (activeNum.rotation + step) % 360;
           else if (e.key === 'ArrowLeft') newRotation = (activeNum.rotation - step + 360) % 360;
@@ -228,7 +228,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
         </div>
       )}
 
-      {!isVerso && displayValue !== "" && numberings.map((num) => {
+      {!isVerso && config.showNumbering && displayValue !== "" && numberings.map((num) => {
         const currentColor = num.color || config.color;
         // La taille est multipliée par fontScaleFactor en preview pour rester proportionnelle
         const finalSize = num.size * fontScaleFactor;
@@ -269,10 +269,12 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
             <span className="bg-white/95 text-accent px-4 py-2 rounded-full font-bold shadow-lg border border-accent/20">
               Format: {config.ticketWidth}x{config.ticketHeight}mm
             </span>
-            <div className="flex flex-wrap justify-center gap-1">
-              <span className="bg-primary/95 text-white text-[11px] px-3 py-1 rounded-full font-bold shadow-md">Ctrl + / - : Taille</span>
-              <span className="bg-accent/95 text-white text-[11px] px-3 py-1 rounded-full font-bold shadow-md">Ctrl + ← → : Rotation</span>
-            </div>
+            {config.showNumbering && (
+              <div className="flex flex-wrap justify-center gap-1">
+                <span className="bg-primary/95 text-white text-[11px] px-3 py-1 rounded-full font-bold shadow-md">Ctrl + / - : Taille</span>
+                <span className="bg-accent/95 text-white text-[11px] px-3 py-1 rounded-full font-bold shadow-md">Ctrl + ← → : Rotation</span>
+              </div>
+            )}
           </div>
         </div>
       )}

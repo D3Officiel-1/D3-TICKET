@@ -69,7 +69,8 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
     const currentNumberings = config.numberings || DEFAULT_CONFIG.numberings;
     updateFields({ 
       numberings: [...currentNumberings, newNum],
-      activeNumberingId: newId
+      activeNumberingId: newId,
+      showNumbering: true
     });
   };
 
@@ -257,87 +258,99 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
         </h2>
         
         <div className="space-y-4">
-          <div className="flex flex-wrap gap-2">
-            {numberings.map((num, idx) => (
-              <div key={num.id} className="relative group">
-                <Button
-                  variant={config.activeNumberingId === num.id ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => updateFields({ activeNumberingId: num.id })}
-                  className="h-9 px-4 font-bold"
-                >
-                  N° {idx + 1}
-                </Button>
-                {numberings.length > 1 && (
-                  <button 
-                    onClick={() => removeNumbering(num.id)}
-                    className="absolute -top-2 -right-2 bg-white border border-red-200 text-red-500 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                )}
-              </div>
-            ))}
+          <div className="flex items-center justify-between p-4 bg-muted/20 rounded-xl border">
+            <Label className="font-bold">Activer la numérotation</Label>
+            <Switch 
+              checked={config.showNumbering} 
+              onCheckedChange={(val) => updateFields({ showNumbering: val })} 
+            />
           </div>
 
-          <div className="p-4 bg-muted/30 rounded-xl border space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-xs uppercase font-bold text-muted-foreground">Taille (pt)</Label>
-                <Input 
-                  type="number"
-                  value={activeNumbering.size}
-                  onChange={(e) => updateActiveNumbering({ size: Math.max(1, parseInt(e.target.value) || 1) })}
-                  className="bg-white font-bold"
-                />
+          {config.showNumbering && (
+            <>
+              <div className="flex flex-wrap gap-2">
+                {numberings.map((num, idx) => (
+                  <div key={num.id} className="relative group">
+                    <Button
+                      variant={config.activeNumberingId === num.id ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => updateFields({ activeNumberingId: num.id })}
+                      className="h-9 px-4 font-bold"
+                    >
+                      N° {idx + 1}
+                    </Button>
+                    {numberings.length > 1 && (
+                      <button 
+                        onClick={() => removeNumbering(num.id)}
+                        className="absolute -top-2 -right-2 bg-white border border-red-200 text-red-500 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+                ))}
               </div>
-              <div className="space-y-2">
-                <Label className="text-xs uppercase font-bold text-muted-foreground">Rotation (°)</Label>
-                <Input 
-                  type="number"
-                  value={activeNumbering.rotation}
-                  onChange={(e) => updateActiveNumbering({ rotation: parseInt(e.target.value) || 0 })}
-                  className="bg-white font-bold"
-                />
-              </div>
-            </div>
 
-            <div className="space-y-3 pt-3 border-t">
-              <div className="flex items-center justify-between">
-                <Label className="text-xs uppercase font-bold text-muted-foreground">Style du Point N° {numberings.findIndex(n => n.id === config.activeNumberingId) + 1}</Label>
-                <Button 
-                  variant={(activeNumbering.autoContrast || (activeNumbering.autoContrast === undefined && config.autoContrast)) ? "default" : "outline"}
-                  size="sm"
-                  className="h-7 text-[9px] gap-1 px-2 uppercase font-black"
-                  onClick={() => updateActiveNumbering({ autoContrast: !(activeNumbering.autoContrast || (activeNumbering.autoContrast === undefined && config.autoContrast)) })}
-                >
-                  <Wand2 className="w-3 h-3" /> Auto
-                </Button>
+              <div className="p-4 bg-muted/30 rounded-xl border space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase font-bold text-muted-foreground">Taille (pt)</Label>
+                    <Input 
+                      type="number"
+                      value={activeNumbering.size}
+                      onChange={(e) => updateActiveNumbering({ size: Math.max(1, parseInt(e.target.value) || 1) })}
+                      className="bg-white font-bold"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase font-bold text-muted-foreground">Rotation (°)</Label>
+                    <Input 
+                      type="number"
+                      value={activeNumbering.rotation}
+                      onChange={(e) => updateActiveNumbering({ rotation: parseInt(e.target.value) || 0 })}
+                      className="bg-white font-bold"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-3 pt-3 border-t">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs uppercase font-bold text-muted-foreground">Style du Point N° {numberings.findIndex(n => n.id === config.activeNumberingId) + 1}</Label>
+                    <Button 
+                      variant={(activeNumbering.autoContrast || (activeNumbering.autoContrast === undefined && config.autoContrast)) ? "default" : "outline"}
+                      size="sm"
+                      className="h-7 text-[9px] gap-1 px-2 uppercase font-black"
+                      onClick={() => updateActiveNumbering({ autoContrast: !(activeNumbering.autoContrast || (activeNumbering.autoContrast === undefined && config.autoContrast)) })}
+                    >
+                      <Wand2 className="w-3 h-3" /> Auto
+                    </Button>
+                  </div>
+                  <div className="flex gap-2">
+                    <Input 
+                      type="color" 
+                      className="w-10 h-8 p-1 cursor-pointer" 
+                      value={activeNumbering.color || config.color} 
+                      onChange={(e) => updateActiveNumbering({ color: e.target.value, autoContrast: false })} 
+                    />
+                    <Input 
+                      value={activeNumbering.color || config.color} 
+                      onChange={(e) => updateActiveNumbering({ color: e.target.value, autoContrast: false })} 
+                      className="h-8 font-mono text-xs" 
+                    />
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={applyActiveToAll}
+                      className="h-8 text-[9px] font-bold gap-1"
+                      title="Appliquer ce style à tous les numéros"
+                    >
+                      <CheckCheck className="w-3 h-3" /> Tous
+                    </Button>
+                  </div>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <Input 
-                  type="color" 
-                  className="w-10 h-8 p-1 cursor-pointer" 
-                  value={activeNumbering.color || config.color} 
-                  onChange={(e) => updateActiveNumbering({ color: e.target.value, autoContrast: false })} 
-                />
-                <Input 
-                  value={activeNumbering.color || config.color} 
-                  onChange={(e) => updateActiveNumbering({ color: e.target.value, autoContrast: false })} 
-                  className="h-8 font-mono text-xs" 
-                />
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={applyActiveToAll}
-                  className="h-8 text-[9px] font-bold gap-1"
-                  title="Appliquer ce style à tous les numéros"
-                >
-                  <CheckCheck className="w-3 h-3" /> Tous
-                </Button>
-              </div>
-            </div>
-          </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -399,9 +412,13 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
         <h2 className="text-xl font-bold flex items-center gap-2 mb-6 text-accent"><Sparkles className="w-5 h-5" /> Séries & Numéros</h2>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2"><Label>Quantité</Label><Input type="number" value={config.quantity} onChange={(e) => updateFields({ quantity: Math.max(1, parseInt(e.target.value) || 1) })} /></div>
-          <div className="space-y-2"><Label>Départ</Label><Input type="number" value={config.startingNumber} onChange={(e) => updateFields({ startingNumber: Math.max(0, parseInt(e.target.value) || 0) })} /></div>
-          <div className="space-y-2"><Label>Préfixe</Label><Input value={config.numberPrefix} onChange={(e) => updateFields({ numberPrefix: e.target.value })} placeholder="Ex: A-" /></div>
-          <div className="space-y-2"><Label>Suffixe</Label><Input value={config.numberSuffix} onChange={(e) => updateFields({ numberSuffix: e.target.value })} placeholder="Ex: -B" /></div>
+          {config.showNumbering && (
+            <>
+              <div className="space-y-2"><Label>Départ</Label><Input type="number" value={config.startingNumber} onChange={(e) => updateFields({ startingNumber: Math.max(0, parseInt(e.target.value) || 0) })} /></div>
+              <div className="space-y-2"><Label>Préfixe</Label><Input value={config.numberPrefix} onChange={(e) => updateFields({ numberPrefix: e.target.value })} placeholder="Ex: A-" /></div>
+              <div className="space-y-2"><Label>Suffixe</Label><Input value={config.numberSuffix} onChange={(e) => updateFields({ numberSuffix: e.target.value })} placeholder="Ex: -B" /></div>
+            </>
+          )}
         </div>
       </div>
 

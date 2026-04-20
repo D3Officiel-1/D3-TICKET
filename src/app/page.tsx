@@ -33,7 +33,9 @@ export default function Home() {
             : DEFAULT_CONFIG.numberings,
           // Ensure dimensions are numbers
           ticketWidth: Number(parsed.ticketWidth) || DEFAULT_CONFIG.ticketWidth,
-          ticketHeight: Number(parsed.ticketHeight) || DEFAULT_CONFIG.ticketHeight
+          ticketHeight: Number(parsed.ticketHeight) || DEFAULT_CONFIG.ticketHeight,
+          // Ensure showNumbering is present
+          showNumbering: typeof parsed.showNumbering === 'boolean' ? parsed.showNumbering : DEFAULT_CONFIG.showNumbering
         });
       } catch (e) {
         console.error("Erreur de chargement de la config locale", e);
@@ -124,7 +126,7 @@ export default function Home() {
                 <span className="text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 px-2 py-1 rounded-md">
                   Mode: {activeFace === 'recto' ? 'Recto' : 'Verso'}
                 </span>
-                {activeFace === 'recto' && (
+                {activeFace === 'recto' && config.showNumbering && (
                   <div className="flex items-center gap-2 text-[10px] bg-accent/10 text-accent px-2 py-1 rounded-md font-bold">
                     <MousePointer2 className="w-3 h-3" />
                     Glissez le numéro
