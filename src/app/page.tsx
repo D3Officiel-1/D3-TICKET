@@ -6,9 +6,18 @@ import { TicketConfig, DEFAULT_CONFIG } from '@/lib/types';
 import { TicketForm } from '@/components/raffle/TicketForm';
 import { TicketPreview } from '@/components/raffle/TicketPreview';
 import { PrintSheet } from '@/components/raffle/PrintSheet';
-import { Ticket, Star, MousePointer2, Layers, Repeat } from 'lucide-react';
+import { Ticket, Star, MousePointer2, Layers, Repeat, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const STORAGE_KEY = 'd3_tombola_config';
 
@@ -16,6 +25,7 @@ export default function Home() {
   const [config, setConfig] = useState<TicketConfig>(DEFAULT_CONFIG);
   const [activeFace, setActiveFace] = useState<'recto' | 'verso'>('recto');
   const [isLoaded, setIsLoaded] = useState(false);
+  const [showAccessAlert, setShowAccessAlert] = useState(true);
 
   // Load config from localStorage on mount
   useEffect(() => {
@@ -66,6 +76,31 @@ export default function Home() {
 
   return (
     <main className="min-h-screen pb-20">
+      {/* Access Restriction Alert */}
+      <AlertDialog open={showAccessAlert} onOpenChange={setShowAccessAlert}>
+        <AlertDialogContent className="bg-white border-2 border-primary/20 rounded-3xl p-8 max-w-md">
+          <AlertDialogHeader>
+            <div className="mx-auto bg-primary/10 p-4 rounded-2xl w-fit mb-4">
+              <Lock className="w-10 h-10 text-primary" />
+            </div>
+            <AlertDialogTitle className="text-2xl font-black text-accent text-center uppercase tracking-tight">
+              Accès Restreint
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-base font-medium text-muted-foreground text-center pt-2 leading-relaxed">
+              Cette application est totalement privée. L'accès est strictement réservé aux personnes autorisées. Toute utilisation non autorisée est interdite.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-8 sm:justify-center">
+            <AlertDialogAction 
+              onClick={() => setShowAccessAlert(false)}
+              className="bg-primary hover:bg-primary/90 text-white font-bold px-10 py-6 rounded-xl text-lg shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95"
+            >
+              J'ai compris
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Header section (Non-printable) */}
       <header className="no-print bg-white border-b py-6 px-4 mb-8 shadow-sm">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
