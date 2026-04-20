@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -39,7 +38,7 @@ export default function Home() {
           ...parsed,
           numberings: Array.isArray(parsed.numberings) && parsed.numberings.length > 0 
             ? parsed.numberings 
-            : DEFAULT_CONFIG.numberings,
+            : (parsed.numberings ? [parsed.numberings] : DEFAULT_CONFIG.numberings),
           ticketWidth: Number(parsed.ticketWidth) || DEFAULT_CONFIG.ticketWidth,
           ticketHeight: Number(parsed.ticketHeight) || DEFAULT_CONFIG.ticketHeight,
           showNumbering: typeof parsed.showNumbering === 'boolean' ? parsed.showNumbering : DEFAULT_CONFIG.showNumbering
@@ -139,20 +138,14 @@ export default function Home() {
               <div className="space-y-4">
                 <h1 
                   onClick={handleTitleClick}
-                  className={cn(
-                    "text-3xl font-black uppercase tracking-tight transition-colors cursor-default select-none",
-                    titleClicks > 0 ? "text-accent" : "text-accent/40"
-                  )}
+                  className="text-3xl font-black uppercase tracking-tight text-accent cursor-default select-none"
                 >
                   Accès Restreint
                 </h1>
 
                 <p 
                   onClick={handleDescClick}
-                  className={cn(
-                    "text-lg font-medium leading-relaxed transition-colors cursor-default select-none",
-                    descClicks > 0 ? "text-muted-foreground" : "text-muted-foreground/30"
-                  )}
+                  className="text-lg font-medium leading-relaxed text-muted-foreground cursor-default select-none"
                 >
                   Cette application est totalement privée. L'accès est strictement réservé aux personnes autorisées. Toute utilisation non autorisée est interdite.
                 </p>
