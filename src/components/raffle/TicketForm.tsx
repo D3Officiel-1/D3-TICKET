@@ -1,16 +1,18 @@
+
 "use client"
 
 import React, { useState, useEffect } from 'react';
-import { TicketConfig, TicketType, NumberingInstance, QRCodeInstance, DEFAULT_CONFIG } from '@/lib/types';
+import { TicketConfig, TicketType, NumberingInstance, QRCodeInstance, DEFAULT_CONFIG, QRCodeDotsType, QRCodeCornersType, QRCodeGradientType } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Printer, Image as ImageIcon, Palette, Layers, Ticket, Star, X, Wand2, Ruler, Plus, Target, Sparkles, CheckCheck, FileDown, Loader2, QrCode, RefreshCw, Type } from 'lucide-react';
+import { Printer, Image as ImageIcon, Palette, Layers, Ticket, Star, X, Wand2, Ruler, Plus, Target, Sparkles, CheckCheck, FileDown, Loader2, QrCode, RefreshCw, Type, Circle, Square, LayoutGrid, Paintbrush } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useToast } from '@/hooks/use-toast';
 import { fetchTicketsAction } from '@/app/actions/tickets';
+import { cn } from '@/lib/utils';
 
 interface TicketFormProps {
   config: TicketConfig;
@@ -142,7 +144,11 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
       bgColor: "#FFFFFF",
       margin: 2,
       level: 'H',
-      rotation: 0
+      rotation: 0,
+      dotsType: 'square',
+      cornersType: 'square',
+      gradientType: 'none',
+      gradientColor2: config.color
     };
     const currentQRs = config.qrCodes || DEFAULT_CONFIG.qrCodes;
     updateFields({ 
@@ -445,7 +451,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
                 ))}
               </div>
 
-              <div className="p-4 bg-muted/30 rounded-xl border space-y-4">
+              <div className="p-4 bg-muted/30 rounded-xl border space-y-6">
                 <div className="space-y-2">
                   <Label className="text-xs uppercase font-bold text-muted-foreground">Contenu du QR Code {qrCodes.findIndex(q => q.id === config.activeQRCodeId) + 1}</Label>
                   <Input 
@@ -459,8 +465,68 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
                     <br /><strong>Astuce :</strong> Utilisez <strong>Ctrl +/-</strong> pour la taille et <strong>Ctrl ←/→</strong> pour pivoter.
                   </p>
                 </div>
+
+                {/* Motif / Forme section based on user request */}
+                <div className="space-y-3">
+                   <Label className="text-xs uppercase font-bold flex items-center gap-2"><LayoutGrid className="w-3 h-3" /> Motif & Forme</Label>
+                   <div className="flex flex-wrap gap-2 p-2 bg-white rounded-lg border border-dashed">
+                      {(['square', 'dots', 'rounded', 'extra-rounded', 'classy', 'classy-rounded'] as QRCodeDotsType[]).map((shape) => (
+                        <Button
+                          key={shape}
+                          variant={activeQR.dotsType === shape ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => updateActiveQRCode({ dotsType: shape })}
+                          className="h-8 w-8 p-0"
+                          title={shape}
+                        >
+                          {shape === 'dots' ? <Circle className="w-4 h-4" /> : <Square className="w-4 h-4" />}
+                        </Button>
+                      ))}
+                   </div>
+                </div>
+
+                {/* Remplir l'écran (Gradient/Solid) section based on user request */}
+                <div className="space-y-3">
+                   <Label className="text-xs uppercase font-bold flex items-center gap-2"><Paintbrush className="w-3 h-3" /> Remplissage</Label>
+                   <div className="flex flex-wrap gap-2 p-2 bg-white rounded-lg border border-dashed">
+                      {(['none', 'linear', 'radial'] as QRCodeGradientType[]).map((type) => (
+                        <Button
+                          key={type}
+                          variant={activeQR.gradientType === type ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => updateActiveQRCode({ gradientType: type })}
+                          className="h-10 px-3 text-[10px] font-bold"
+                        >
+                          {type === 'none' ? 'Couleur Unie' : type === 'linear' ? 'Linéaire' : 'Radial'}
+                        </Button>
+                      ))}
+                   </div>
+                </div>
                 
                 <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase font-bold text-muted-foreground">Couleur Principale</Label>
+                    <Input 
+                      type="color" 
+                      className="w-full h-8 p-1 cursor-pointer" 
+                      value={activeQR.fgColor || "#000000"} 
+                      onChange={(e) => updateActiveQRCode({ fgColor: e.target.value })} 
+                    />
+                  </div>
+                  {activeQR.gradientType !== 'none' && (
+                    <div className="space-y-2 animate-in fade-in slide-in-from-left-2">
+                      <Label className="text-xs uppercase font-bold text-muted-foreground">Couleur Dégradé</Label>
+                      <Input 
+                        type="color" 
+                        className="w-full h-8 p-1 cursor-pointer" 
+                        value={activeQR.gradientColor2 || config.color} 
+                        onChange={(e) => updateActiveQRCode({ gradientColor2: e.target.value })} 
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 pt-3 border-t">
                   <div className="space-y-2">
                     <Label className="text-xs uppercase font-bold text-muted-foreground">Taille (px)</Label>
                     <Input 
@@ -508,29 +574,14 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
                 </div>
 
                 <div className="space-y-3 pt-3 border-t">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-[10px] uppercase font-bold text-muted-foreground">Couleur Code</Label>
-                      <div className="flex gap-2">
-                        <Input 
-                          type="color" 
-                          className="w-full h-8 p-1 cursor-pointer" 
-                          value={activeQR.fgColor || "#000000"} 
-                          onChange={(e) => updateActiveQRCode({ fgColor: e.target.value })} 
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-[10px] uppercase font-bold text-muted-foreground">Couleur Fond</Label>
-                      <div className="flex gap-2">
-                        <Input 
-                          type="color" 
-                          className="w-full h-8 p-1 cursor-pointer" 
-                          value={activeQR.bgColor || "#FFFFFF"} 
-                          onChange={(e) => updateActiveQRCode({ bgColor: e.target.value })} 
-                        />
-                      </div>
-                    </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] uppercase font-bold text-muted-foreground">Couleur Fond</Label>
+                    <Input 
+                      type="color" 
+                      className="w-full h-8 p-1 cursor-pointer" 
+                      value={activeQR.bgColor || "#FFFFFF"} 
+                      onChange={(e) => updateActiveQRCode({ bgColor: e.target.value })} 
+                    />
                   </div>
                 </div>
               </div>

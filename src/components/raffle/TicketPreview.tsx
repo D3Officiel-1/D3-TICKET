@@ -1,9 +1,10 @@
+
 "use client"
 
 import React, { useMemo, useRef, useState, useEffect, useCallback } from 'react';
 import { TicketConfig, NumberingInstance, QRCodeInstance, DEFAULT_CONFIG } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { QRCodeCanvas } from 'qrcode.react';
+import QRCodeStyling from 'qr-code-styling';
 
 interface TicketPreviewProps {
   config: TicketConfig;
@@ -218,49 +219,112 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
         );
       })}
 
-      {!isVerso && config.showQRCode && qrCodes.map((qr) => {
-        // Remplacement dynamique des placeholders
-        const qrContent = qr.content
-          .replace("[NUM]", displayValue)
-          .replace("[TYPE]", config.ticketType);
-          
-        const marginPx = (qr.margin || 0) * fontScaleFactor;
-        
-        return (
-          <div 
-            key={qr.id}
-            onMouseDown={(e) => {
-              e.stopPropagation();
-              if (isPrintView || !onConfigChange) return;
-              onConfigChange({ ...config, activeQRCodeId: qr.id });
-              handleMouseDown(e, 'qrcode', qr.id);
-            }}
-            className={cn(
-              "absolute z-30 transition-opacity flex items-center justify-center box-border",
-              !isPrintView && "cursor-move pointer-events-auto",
-              !isPrintView && config.activeQRCodeId === qr.id && "ring-2 ring-primary ring-offset-2 rounded-sm"
-            )}
-            style={{
-              left: `${qr.x}%`,
-              top: `${qr.y}%`,
-              transform: `translate(-50%, -50%) rotate(${qr.rotation || 0}deg)`,
-              width: `${(qr.size || 40) * fontScaleFactor}px`,
-              height: `${(qr.size || 40) * fontScaleFactor}px`,
-              backgroundColor: qr.bgColor || "#FFFFFF",
-              padding: `${marginPx}px`
-            }}
-          >
-            <QRCodeCanvas 
-              value={qrContent || " "} 
-              size={(qr.size || 40) * (isPrintView ? 4 : 1)}
-              style={{ width: '100%', height: '100%' }}
-              level={qr.level || "H"}
-              fgColor={qr.fgColor || "#000000"}
-              bgColor={qr.bgColor || "#FFFFFF"}
-            />
-          </div>
-        );
-      })}
+      {!isVerso && config.showQRCode && qrCodes.map((qr) => (
+        <QRCodeItem 
+          key={qr.id} 
+          qr={qr} 
+          displayValue={displayValue} 
+          config={config} 
+          fontScaleFactor={fontScaleFactor}
+          isPrintView={isPrintView}
+          onMouseDown={handleMouseDown}
+          onActiveChange={(id) => onConfigChange?.({ ...config, activeQRCodeId: id })}
+        />
+      ))}
+    </div>
+  );
+};
+
+// Sub-component for individual QR Codes to handle local rendering logic
+const QRCodeItem = ({ qr, displayValue, config, fontScaleFactor, isPrintView, onMouseDown, onActiveChange }: any) => {
+  const qrRef = useRef<HTMLDivElement>(null);
+  const qrInstance = useRef<any>(null);
+
+  useEffect(() => {
+    const qrContent = qr.content
+      .replace("[NUM]", displayValue)
+      .replace("[TYPE]", config.ticketType);
+
+    const size = (qr.size || 40) * (isPrintView ? 4 : 1) * fontScaleFactor;
+
+    const qrOptions: any = {
+      width: size,
+      height: size,
+      data: qrContent || " ",
+      margin: (qr.margin || 0),
+      qrOptions: {
+        typeNumber: 0,
+        mode: 'Byte',
+        errorCorrectionLevel: qr.level || 'H'
+      },
+      dotsOptions: {
+        color: qr.fgColor || "#000000",
+        type: qr.dotsType || 'square'
+      },
+      backgroundOptions: {
+        color: qr.bgColor || "#FFFFFF",
+      },
+      cornersSquareOptions: {
+        color: qr.fgColor || "#000000",
+        type: qr.cornersType || 'square'
+      },
+      cornersDotOptions: {
+        color: qr.fgColor || "#000000",
+        type: 'square'
+      }
+    };
+
+    // Add gradient if requested
+    if (qr.gradientType && qr.gradientType !== 'none') {
+      qrOptions.dotsOptions.gradient = {
+        type: qr.gradientType,
+        rotation: 0,
+        colorStops: [
+          { offset: 0, color: qr.fgColor || "#000000" },
+          { offset: 1, color: qr.gradientColor2 || "#000000" }
+        ]
+      };
+      // Apply gradient to corners too for consistency
+      qrOptions.cornersSquareOptions.gradient = qrOptions.dotsOptions.gradient;
+      qrOptions.cornersDotOptions.gradient = qrOptions.dotsOptions.gradient;
+    }
+
+    if (!qrInstance.current) {
+      qrInstance.current = new QRCodeStyling(qrOptions);
+      if (qrRef.current) {
+        qrInstance.current.append(qrRef.current);
+      }
+    } else {
+      qrInstance.current.update(qrOptions);
+    }
+  }, [qr, displayValue, config.ticketType, fontScaleFactor, isPrintView]);
+
+  return (
+    <div 
+      onMouseDown={(e) => {
+        e.stopPropagation();
+        if (isPrintView) return;
+        onActiveChange(qr.id);
+        onMouseDown(e, 'qrcode', qr.id);
+      }}
+      className={cn(
+        "absolute z-30 flex items-center justify-center box-border",
+        !isPrintView && "cursor-move pointer-events-auto",
+        !isPrintView && config.activeQRCodeId === qr.id && "ring-2 ring-primary ring-offset-2 rounded-sm"
+      )}
+      style={{
+        left: `${qr.x}%`,
+        top: `${qr.y}%`,
+        transform: `translate(-50%, -50%) rotate(${qr.rotation || 0}deg)`,
+        width: `${(qr.size || 40) * fontScaleFactor}px`,
+        height: `${(qr.size || 40) * fontScaleFactor}px`,
+      }}
+    >
+      <div 
+        ref={qrRef} 
+        style={{ width: '100%', height: '100%' }}
+        className="[&_svg]:w-full [&_svg]:h-full"
+      />
     </div>
   );
 };

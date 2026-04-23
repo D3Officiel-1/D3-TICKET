@@ -1,3 +1,4 @@
+
 export type TicketType = 'event_vip' | 'event' | 'raffle' | 'custom';
 
 export interface NumberingInstance {
@@ -10,6 +11,10 @@ export interface NumberingInstance {
   autoContrast?: boolean;
 }
 
+export type QRCodeDotsType = 'square' | 'dots' | 'rounded' | 'extra-rounded' | 'classy' | 'classy-rounded';
+export type QRCodeCornersType = 'square' | 'dot' | 'extra-rounded';
+export type QRCodeGradientType = 'none' | 'linear' | 'radial';
+
 export interface QRCodeInstance {
   id: string;
   content: string;
@@ -21,6 +26,11 @@ export interface QRCodeInstance {
   margin?: number;
   level?: 'L' | 'M' | 'Q' | 'H';
   rotation?: number;
+  // New Styling properties
+  dotsType?: QRCodeDotsType;
+  cornersType?: QRCodeCornersType;
+  gradientType?: QRCodeGradientType;
+  gradientColor2?: string;
 }
 
 export interface TicketConfig {
@@ -80,7 +90,11 @@ export const DEFAULT_CONFIG: TicketConfig = {
       bgColor: "#FFFFFF",
       margin: 2,
       level: 'H',
-      rotation: 0
+      rotation: 0,
+      dotsType: 'square',
+      cornersType: 'square',
+      gradientType: 'none',
+      gradientColor2: "#E8308C"
     }
   ],
   activeQRCodeId: 'qr-1',
