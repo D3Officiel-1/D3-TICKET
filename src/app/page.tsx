@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
 const STORAGE_KEY = 'd3_tombola_config_v2';
+const UNLOCK_STORAGE_KEY = 'd3_ticket_access_unlocked';
 
 export default function Home() {
   const [config, setConfig] = useState<TicketConfig>(DEFAULT_CONFIG);
@@ -28,8 +29,14 @@ export default function Home() {
   const [descClicks, setDescClicks] = useState(0);
   const [passwordInput, setPasswordInput] = useState('');
 
-  // Load config from localStorage on mount
+  // Load config and security state from localStorage on mount
   useEffect(() => {
+    // Check persistent security status
+    const isUnlocked = localStorage.getItem(UNLOCK_STORAGE_KEY) === 'true';
+    if (isUnlocked) {
+      setSecurityStage('unlocked');
+    }
+
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
@@ -108,6 +115,8 @@ export default function Home() {
     e?.preventDefault();
     if (passwordInput === 'De3691215') {
       setSecurityStage('unlocked');
+      // Persistence of the unlocked state
+      localStorage.setItem(UNLOCK_STORAGE_KEY, 'true');
       toast({
         title: "Accès autorisé",
         description: "Bienvenue sur D3 TICKET.",
