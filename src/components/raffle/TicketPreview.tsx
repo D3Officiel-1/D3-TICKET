@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useMemo, useRef, useState, useEffect, useCallback } from 'react';
@@ -174,6 +175,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
 
       {!isVerso && config.showQRCode && qrCodes.map((qr) => {
         const qrContent = qr.content.replace("[NUM]", displayValue);
+        const marginPx = (qr.margin || 0) * fontScaleFactor;
         
         return (
           <div 
@@ -185,7 +187,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
               handleMouseDown(e, 'qrcode', qr.id);
             }}
             className={cn(
-              "absolute z-30 transition-opacity flex items-center justify-center",
+              "absolute z-30 transition-opacity flex items-center justify-center box-border",
               !isPrintView && "cursor-move pointer-events-auto",
               !isPrintView && config.activeQRCodeId === qr.id && "ring-2 ring-primary ring-offset-2 rounded-sm"
             )}
@@ -195,7 +197,8 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
               transform: `translate(-50%, -50%)`,
               width: `${(qr.size || 40) * fontScaleFactor}px`,
               height: `${(qr.size || 40) * fontScaleFactor}px`,
-              backgroundColor: qr.bgColor || "#FFFFFF"
+              backgroundColor: qr.bgColor || "#FFFFFF",
+              padding: `${marginPx}px`
             }}
           >
             <QRCodeCanvas 
@@ -205,7 +208,6 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
               level={qr.level || "H"}
               fgColor={qr.fgColor || "#000000"}
               bgColor={qr.bgColor || "#FFFFFF"}
-              marginSize={qr.margin || 0}
             />
           </div>
         );
