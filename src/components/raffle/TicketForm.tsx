@@ -2,17 +2,18 @@
 "use client"
 
 import React, { useState, useEffect } from 'react';
-import { TicketConfig, TicketType, NumberingInstance, QRCodeInstance, DEFAULT_CONFIG, QRCodeDotsType, QRCodeCornersType, QRCodeGradientType } from '@/lib/types';
+import { TicketConfig, TicketType, NumberingInstance, QRCodeInstance, DEFAULT_CONFIG, QRCodeDotsType, QRCodeCornersSquareType, QRCodeCornersDotType, QRCodeGradientType } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Printer, Image as ImageIcon, Palette, Layers, Ticket, Star, X, Wand2, Ruler, Plus, Target, Sparkles, CheckCheck, FileDown, Loader2, QrCode, RefreshCw, Type, Circle, Square, LayoutGrid, Paintbrush } from 'lucide-react';
+import { Printer, Image as ImageIcon, Palette, Layers, Ticket, Star, X, Wand2, Ruler, Plus, Target, Sparkles, CheckCheck, FileDown, Loader2, QrCode, RefreshCw, Type, Circle, Square, LayoutGrid, Paintbrush, ChevronDown } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useToast } from '@/hooks/use-toast';
 import { fetchTicketsAction } from '@/app/actions/tickets';
 import { cn } from '@/lib/utils';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 interface TicketFormProps {
   config: TicketConfig;
@@ -146,9 +147,14 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
       level: 'H',
       rotation: 0,
       dotsType: 'square',
-      cornersType: 'square',
       gradientType: 'none',
-      gradientColor2: config.color
+      gradientColor2: config.color,
+      cornersSquareType: 'square',
+      cornersSquareColor: '#000000',
+      cornersSquareGradientType: 'none',
+      cornersDotType: 'square',
+      cornersDotColor: '#000000',
+      cornersDotGradientType: 'none'
     };
     const currentQRs = config.qrCodes || DEFAULT_CONFIG.qrCodes;
     updateFields({ 
@@ -462,13 +468,11 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
                   />
                   <p className="text-[10px] text-muted-foreground">
                     Utilisez <strong>[NUM]</strong> pour le code et <strong>[TYPE]</strong> pour le type de ticket.
-                    <br /><strong>Astuce :</strong> Utilisez <strong>Ctrl +/-</strong> pour la taille et <strong>Ctrl ←/→</strong> pour pivoter.
                   </p>
                 </div>
 
-                {/* Motif / Forme section based on user request */}
                 <div className="space-y-3">
-                   <Label className="text-xs uppercase font-bold flex items-center gap-2"><LayoutGrid className="w-3 h-3" /> Motif & Forme</Label>
+                   <Label className="text-xs uppercase font-bold flex items-center gap-2"><LayoutGrid className="w-3 h-3" /> Motif du Corps</Label>
                    <div className="flex flex-wrap gap-2 p-2 bg-white rounded-lg border border-dashed">
                       {(['square', 'dots', 'rounded', 'extra-rounded', 'classy', 'classy-rounded'] as QRCodeDotsType[]).map((shape) => (
                         <Button
@@ -485,9 +489,121 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
                    </div>
                 </div>
 
-                {/* Remplir l'écran (Gradient/Solid) section based on user request */}
+                <Accordion type="single" collapsible className="w-full">
+                  <AccordionItem value="corners" className="border-none">
+                    <AccordionTrigger className="hover:no-underline bg-white rounded-lg px-4 border border-dashed text-xs uppercase font-black py-3">
+                      Coins (Yeux)
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-4 space-y-6 pb-2">
+                      {/* External Corner Shape */}
+                      <div className="space-y-3">
+                        <Label className="text-[10px] uppercase font-bold flex items-center gap-2">Forme externe (Cadre)</Label>
+                        <div className="flex gap-2">
+                          {(['square', 'dot', 'extra-rounded'] as QRCodeCornersSquareType[]).map((type) => (
+                            <Button
+                              key={type}
+                              variant={activeQR.cornersSquareType === type ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => updateActiveQRCode({ cornersSquareType: type })}
+                              className="flex-1 h-9 p-0"
+                            >
+                              {type === 'square' ? <Square className="w-4 h-4" /> : type === 'dot' ? <Circle className="w-4 h-4" /> : <Square className="w-4 h-4 rounded-sm" />}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* External Remplissage */}
+                      <div className="space-y-3">
+                        <Label className="text-[10px] uppercase font-bold flex items-center gap-2">Remplissage externe</Label>
+                        <div className="flex gap-2">
+                          {(['none', 'linear', 'radial'] as QRCodeGradientType[]).map((type) => (
+                            <Button
+                              key={type}
+                              variant={activeQR.cornersSquareGradientType === type ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => updateActiveQRCode({ cornersSquareGradientType: type })}
+                              className="flex-1 h-9 text-[9px] font-bold"
+                            >
+                              {type === 'none' ? 'Uni' : type.toUpperCase()}
+                            </Button>
+                          ))}
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Input 
+                            type="color" 
+                            className="w-full h-8 p-1 cursor-pointer" 
+                            value={activeQR.cornersSquareColor || "#000000"} 
+                            onChange={(e) => updateActiveQRCode({ cornersSquareColor: e.target.value })} 
+                          />
+                          {activeQR.cornersSquareGradientType !== 'none' && (
+                            <Input 
+                              type="color" 
+                              className="w-full h-8 p-1 cursor-pointer" 
+                              value={activeQR.cornersSquareGradientColor2 || config.color} 
+                              onChange={(e) => updateActiveQRCode({ cornersSquareGradientColor2: e.target.value })} 
+                            />
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Internal Corner Shape */}
+                      <div className="space-y-3">
+                        <Label className="text-[10px] uppercase font-bold flex items-center gap-2">Forme interne (Point)</Label>
+                        <div className="flex gap-2">
+                          {(['square', 'dot'] as QRCodeCornersDotType[]).map((type) => (
+                            <Button
+                              key={type}
+                              variant={activeQR.cornersDotType === type ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => updateActiveQRCode({ cornersDotType: type })}
+                              className="flex-1 h-9 p-0"
+                            >
+                              {type === 'square' ? <Square className="w-2 h-2 fill-current" /> : <Circle className="w-2 h-2 fill-current" />}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Internal Remplissage */}
+                      <div className="space-y-3">
+                        <Label className="text-[10px] uppercase font-bold flex items-center gap-2">Remplissage interne</Label>
+                        <div className="flex gap-2">
+                          {(['none', 'linear', 'radial'] as QRCodeGradientType[]).map((type) => (
+                            <Button
+                              key={type}
+                              variant={activeQR.cornersDotGradientType === type ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => updateActiveQRCode({ cornersDotGradientType: type })}
+                              className="flex-1 h-9 text-[9px] font-bold"
+                            >
+                              {type === 'none' ? 'Uni' : type.toUpperCase()}
+                            </Button>
+                          ))}
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Input 
+                            type="color" 
+                            className="w-full h-8 p-1 cursor-pointer" 
+                            value={activeQR.cornersDotColor || "#000000"} 
+                            onChange={(e) => updateActiveQRCode({ cornersDotColor: e.target.value })} 
+                          />
+                          {activeQR.cornersDotGradientType !== 'none' && (
+                            <Input 
+                              type="color" 
+                              className="w-full h-8 p-1 cursor-pointer" 
+                              value={activeQR.cornersDotGradientColor2 || config.color} 
+                              onChange={(e) => updateActiveQRCode({ cornersDotGradientColor2: e.target.value })} 
+                            />
+                          )}
+                        </div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+
                 <div className="space-y-3">
-                   <Label className="text-xs uppercase font-bold flex items-center gap-2"><Paintbrush className="w-3 h-3" /> Remplissage</Label>
+                   <Label className="text-xs uppercase font-bold flex items-center gap-2"><Paintbrush className="w-3 h-3" /> Remplissage du Corps</Label>
                    <div className="flex flex-wrap gap-2 p-2 bg-white rounded-lg border border-dashed">
                       {(['none', 'linear', 'radial'] as QRCodeGradientType[]).map((type) => (
                         <Button
@@ -505,7 +621,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-xs uppercase font-bold text-muted-foreground">Couleur Principale</Label>
+                    <Label className="text-xs uppercase font-bold text-muted-foreground">Couleur Corps</Label>
                     <Input 
                       type="color" 
                       className="w-full h-8 p-1 cursor-pointer" 
@@ -514,8 +630,8 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
                     />
                   </div>
                   {activeQR.gradientType !== 'none' && (
-                    <div className="space-y-2 animate-in fade-in slide-in-from-left-2">
-                      <Label className="text-xs uppercase font-bold text-muted-foreground">Couleur Dégradé</Label>
+                    <div className="space-y-2">
+                      <Label className="text-xs uppercase font-bold text-muted-foreground">Couleur Dégradé Corps</Label>
                       <Input 
                         type="color" 
                         className="w-full h-8 p-1 cursor-pointer" 

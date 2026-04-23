@@ -265,16 +265,16 @@ const QRCodeItem = ({ qr, displayValue, config, fontScaleFactor, isPrintView, on
         color: qr.bgColor || "#FFFFFF",
       },
       cornersSquareOptions: {
-        color: qr.fgColor || "#000000",
-        type: qr.cornersType || 'square'
+        color: qr.cornersSquareColor || qr.fgColor || "#000000",
+        type: qr.cornersSquareType || 'square'
       },
       cornersDotOptions: {
-        color: qr.fgColor || "#000000",
-        type: 'square'
+        color: qr.cornersDotColor || qr.fgColor || "#000000",
+        type: qr.cornersDotType || 'square'
       }
     };
 
-    // Add gradient if requested
+    // Body Gradient
     if (qr.gradientType && qr.gradientType !== 'none') {
       qrOptions.dotsOptions.gradient = {
         type: qr.gradientType,
@@ -284,9 +284,30 @@ const QRCodeItem = ({ qr, displayValue, config, fontScaleFactor, isPrintView, on
           { offset: 1, color: qr.gradientColor2 || "#000000" }
         ]
       };
-      // Apply gradient to corners too for consistency
-      qrOptions.cornersSquareOptions.gradient = qrOptions.dotsOptions.gradient;
-      qrOptions.cornersDotOptions.gradient = qrOptions.dotsOptions.gradient;
+    }
+
+    // External Corners (Square) Gradient
+    if (qr.cornersSquareGradientType && qr.cornersSquareGradientType !== 'none') {
+      qrOptions.cornersSquareOptions.gradient = {
+        type: qr.cornersSquareGradientType,
+        rotation: 0,
+        colorStops: [
+          { offset: 0, color: qr.cornersSquareColor || qr.fgColor || "#000000" },
+          { offset: 1, color: qr.cornersSquareGradientColor2 || config.color }
+        ]
+      };
+    }
+
+    // Internal Corners (Dot) Gradient
+    if (qr.cornersDotGradientType && qr.cornersDotGradientType !== 'none') {
+      qrOptions.cornersDotOptions.gradient = {
+        type: qr.cornersDotGradientType,
+        rotation: 0,
+        colorStops: [
+          { offset: 0, color: qr.cornersDotColor || qr.fgColor || "#000000" },
+          { offset: 1, color: qr.cornersDotGradientColor2 || config.color }
+        ]
+      };
     }
 
     if (!qrInstance.current) {

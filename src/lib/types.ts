@@ -12,7 +12,8 @@ export interface NumberingInstance {
 }
 
 export type QRCodeDotsType = 'square' | 'dots' | 'rounded' | 'extra-rounded' | 'classy' | 'classy-rounded';
-export type QRCodeCornersType = 'square' | 'dot' | 'extra-rounded';
+export type QRCodeCornersSquareType = 'square' | 'dot' | 'extra-rounded';
+export type QRCodeCornersDotType = 'square' | 'dot';
 export type QRCodeGradientType = 'none' | 'linear' | 'radial';
 
 export interface QRCodeInstance {
@@ -26,11 +27,20 @@ export interface QRCodeInstance {
   margin?: number;
   level?: 'L' | 'M' | 'Q' | 'H';
   rotation?: number;
-  // New Styling properties
+  // Body Styling
   dotsType?: QRCodeDotsType;
-  cornersType?: QRCodeCornersType;
   gradientType?: QRCodeGradientType;
   gradientColor2?: string;
+  // Corner Square Styling (External)
+  cornersSquareType?: QRCodeCornersSquareType;
+  cornersSquareColor?: string;
+  cornersSquareGradientType?: QRCodeGradientType;
+  cornersSquareGradientColor2?: string;
+  // Corner Dot Styling (Internal)
+  cornersDotType?: QRCodeCornersDotType;
+  cornersDotColor?: string;
+  cornersDotGradientType?: QRCodeGradientType;
+  cornersDotGradientColor2?: string;
 }
 
 export interface TicketConfig {
@@ -92,9 +102,14 @@ export const DEFAULT_CONFIG: TicketConfig = {
       level: 'H',
       rotation: 0,
       dotsType: 'square',
-      cornersType: 'square',
       gradientType: 'none',
-      gradientColor2: "#E8308C"
+      gradientColor2: "#E8308C",
+      cornersSquareType: 'square',
+      cornersSquareColor: '#000000',
+      cornersSquareGradientType: 'none',
+      cornersDotType: 'square',
+      cornersDotColor: '#000000',
+      cornersDotGradientType: 'none'
     }
   ],
   activeQRCodeId: 'qr-1',
