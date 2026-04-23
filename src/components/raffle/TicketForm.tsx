@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -7,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Printer, Image as ImageIcon, Palette, Layers, Ticket, Star, X, Wand2, Ruler, Plus, Target, Sparkles, CheckCheck, FileDown, Loader2, QrCode, RefreshCw } from 'lucide-react';
+import { Printer, Image as ImageIcon, Palette, Layers, Ticket, Star, X, Wand2, Ruler, Plus, Target, Sparkles, CheckCheck, FileDown, Loader2, QrCode, RefreshCw, Type } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useToast } from '@/hooks/use-toast';
 import { fetchTicketsAction } from '@/app/actions/tickets';
@@ -80,7 +81,6 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
     }
   };
 
-  // Numbering Logic
   const addNumbering = () => {
     const newId = `num-${Date.now()}`;
     const newNum: NumberingInstance = {
@@ -131,7 +131,6 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
     updateFields({ numberings: newNumberings });
   };
 
-  // QR Code Logic
   const addQRCode = () => {
     const newId = `qr-${Date.now()}`;
     const newQR: QRCodeInstance = {
@@ -139,7 +138,11 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
       content: "[NUM]",
       size: 40,
       x: 50,
-      y: 50
+      y: 50,
+      fgColor: "#000000",
+      bgColor: "#FFFFFF",
+      includeMargin: false,
+      level: 'H'
     };
     const currentQRs = config.qrCodes || DEFAULT_CONFIG.qrCodes;
     updateFields({ 
@@ -453,14 +456,66 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
                   />
                   <p className="text-[10px] text-muted-foreground">Utilisez <strong>[NUM]</strong> pour insérer le code récupéré via l'API.</p>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-xs uppercase font-bold text-muted-foreground">Taille (px)</Label>
-                  <Input 
-                    type="number"
-                    value={activeQR.size}
-                    onChange={(e) => updateActiveQRCode({ size: Math.max(10, parseInt(e.target.value) || 10) })}
-                    className="bg-white font-bold"
-                  />
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase font-bold text-muted-foreground">Taille (px)</Label>
+                    <Input 
+                      type="number"
+                      value={activeQR.size}
+                      onChange={(e) => updateActiveQRCode({ size: Math.max(10, parseInt(e.target.value) || 10) })}
+                      className="bg-white font-bold"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase font-bold text-muted-foreground">Correction</Label>
+                    <Select value={activeQR.level} onValueChange={(v: 'L'|'M'|'Q'|'H') => updateActiveQRCode({ level: v })}>
+                      <SelectTrigger className="h-10 bg-white font-bold">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="L">Basse (7%)</SelectItem>
+                        <SelectItem value="M">Moyenne (15%)</SelectItem>
+                        <SelectItem value="Q">Quartile (25%)</SelectItem>
+                        <SelectItem value="H">Haute (30%)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-3 pt-3 border-t">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-[10px] uppercase font-bold text-muted-foreground">Couleur Code</Label>
+                      <div className="flex gap-2">
+                        <Input 
+                          type="color" 
+                          className="w-full h-8 p-1 cursor-pointer" 
+                          value={activeQR.fgColor || "#000000"} 
+                          onChange={(e) => updateActiveQRCode({ fgColor: e.target.value })} 
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] uppercase font-bold text-muted-foreground">Couleur Fond</Label>
+                      <div className="flex gap-2">
+                        <Input 
+                          type="color" 
+                          className="w-full h-8 p-1 cursor-pointer" 
+                          value={activeQR.bgColor || "#FFFFFF"} 
+                          onChange={(e) => updateActiveQRCode({ bgColor: e.target.value })} 
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-2 bg-white/50 rounded-lg border border-dashed mt-2">
+                    <Label className="text-xs font-bold">Inclure une marge</Label>
+                    <Switch 
+                      checked={activeQR.includeMargin} 
+                      onCheckedChange={(val) => updateActiveQRCode({ includeMargin: val })} 
+                    />
+                  </div>
                 </div>
               </div>
             </>
@@ -515,13 +570,13 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
               disabled={isFetchingCodes}
             >
               {isFetchingCodes ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-              Générer Codes API
+              Synchroniser Firestore
             </Button>
           </div>
         </div>
         {config.fetchedCodes.length > 0 && (
           <p className="mt-2 text-xs font-bold text-green-600 flex items-center gap-1">
-            <CheckCheck className="w-3 h-3" /> {config.fetchedCodes.length} codes API chargés.
+            <CheckCheck className="w-3 h-3" /> {config.fetchedCodes.length} codes chargés depuis Firestore.
           </p>
         )}
       </div>

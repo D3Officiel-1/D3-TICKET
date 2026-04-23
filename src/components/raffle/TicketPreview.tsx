@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useMemo, useRef, useState, useEffect, useCallback } from 'react';
@@ -21,17 +22,14 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
   const qrCodes = config.qrCodes || DEFAULT_CONFIG.qrCodes;
 
   const displayValue = useMemo(() => {
-    // Si un numéro est explicitement fourni (cas de l'impression), on l'utilise
     if (number !== undefined && number !== null && number !== "") {
       return String(number);
     }
     
-    // En mode prévisualisation (pas d'impression), on prend le premier code récupéré s'il existe
     if (!isPrintView && config.fetchedCodes && config.fetchedCodes.length > 0) {
       return config.fetchedCodes[0];
     }
     
-    // Valeur par défaut pour l'éditeur
     return isPrintView ? "" : "00001";
   }, [number, isPrintView, config.fetchedCodes]);
 
@@ -188,7 +186,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
               handleMouseDown(e, 'qrcode', qr.id);
             }}
             className={cn(
-              "absolute z-30 transition-opacity",
+              "absolute z-30 transition-opacity flex items-center justify-center",
               !isPrintView && "cursor-move pointer-events-auto",
               !isPrintView && config.activeQRCodeId === qr.id && "ring-2 ring-primary ring-offset-2 rounded-sm"
             )}
@@ -198,13 +196,17 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
               transform: `translate(-50%, -50%)`,
               width: `${(qr.size || 40) * fontScaleFactor}px`,
               height: `${(qr.size || 40) * fontScaleFactor}px`,
+              backgroundColor: qr.bgColor || "#FFFFFF"
             }}
           >
             <QRCodeCanvas 
               value={qrContent || " "} 
               size={(qr.size || 40) * (isPrintView ? 4 : 1)}
               style={{ width: '100%', height: '100%' }}
-              level="H"
+              level={qr.level || "H"}
+              fgColor={qr.fgColor || "#000000"}
+              bgColor={qr.bgColor || "#FFFFFF"}
+              includeMargin={qr.includeMargin || false}
             />
           </div>
         );

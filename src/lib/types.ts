@@ -17,6 +17,10 @@ export interface QRCodeInstance {
   size: number;
   x: number;
   y: number;
+  fgColor?: string;
+  bgColor?: string;
+  includeMargin?: boolean;
+  level?: 'L' | 'M' | 'Q' | 'H';
 }
 
 export interface TicketConfig {
@@ -66,7 +70,17 @@ export const DEFAULT_CONFIG: TicketConfig = {
   // Default QR Code Values
   showQRCode: false,
   qrCodes: [
-    { id: 'qr-1', content: "[NUM]", size: 40, x: 15, y: 50 }
+    { 
+      id: 'qr-1', 
+      content: "[NUM]", 
+      size: 40, 
+      x: 15, 
+      y: 50,
+      fgColor: "#000000",
+      bgColor: "#FFFFFF",
+      includeMargin: false,
+      level: 'H'
+    }
   ],
   activeQRCodeId: 'qr-1',
   fetchedCodes: [],
