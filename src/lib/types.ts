@@ -1,4 +1,3 @@
-
 export type TicketType = 'event_vip' | 'event' | 'raffle' | 'custom';
 
 export interface NumberingInstance {
@@ -19,7 +18,7 @@ export interface QRCodeInstance {
   y: number;
   fgColor?: string;
   bgColor?: string;
-  includeMargin?: boolean;
+  margin?: number;
   level?: 'L' | 'M' | 'Q' | 'H';
 }
 
@@ -78,7 +77,7 @@ export const DEFAULT_CONFIG: TicketConfig = {
       y: 50,
       fgColor: "#000000",
       bgColor: "#FFFFFF",
-      includeMargin: false,
+      margin: 2,
       level: 'H'
     }
   ],

@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -141,7 +140,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
       y: 50,
       fgColor: "#000000",
       bgColor: "#FFFFFF",
-      includeMargin: false,
+      margin: 2,
       level: 'H'
     };
     const currentQRs = config.qrCodes || DEFAULT_CONFIG.qrCodes;
@@ -509,11 +508,14 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
                     </div>
                   </div>
                   
-                  <div className="flex items-center justify-between p-2 bg-white/50 rounded-lg border border-dashed mt-2">
-                    <Label className="text-xs font-bold">Inclure une marge</Label>
-                    <Switch 
-                      checked={activeQR.includeMargin} 
-                      onCheckedChange={(val) => updateActiveQRCode({ includeMargin: val })} 
+                  <div className="space-y-2 mt-2">
+                    <Label className="text-xs uppercase font-bold text-muted-foreground">Marge de sécurité (modules)</Label>
+                    <Input 
+                      type="number"
+                      value={activeQR.margin}
+                      onChange={(e) => updateActiveQRCode({ margin: Math.max(0, parseInt(e.target.value) || 0) })}
+                      className="bg-white font-bold h-10"
+                      placeholder="Ex: 2"
                     />
                   </div>
                 </div>

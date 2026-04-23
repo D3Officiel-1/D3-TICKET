@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useMemo, useRef, useState, useEffect, useCallback } from 'react';
@@ -206,7 +205,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
               level={qr.level || "H"}
               fgColor={qr.fgColor || "#000000"}
               bgColor={qr.bgColor || "#FFFFFF"}
-              includeMargin={qr.includeMargin || false}
+              marginSize={qr.margin || 0}
             />
           </div>
         );
