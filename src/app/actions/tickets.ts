@@ -1,45 +1,43 @@
+
 'use server';
 
 /**
  * @fileOverview Action serveur pour la récupération des codes depuis Firestore.
+ * Cette version est STRICTE : elle ne retourne que les codes correspondant au type demandé.
  */
 
 import { initializeApp, getApps } from "firebase/app";
 import { getFirestore, collection, query, where, limit, getDocs } from "firebase/firestore";
 import { firebaseConfig } from "@/firebase/config";
 
-export async function fetchTicketsAction(quantity: number, ticketType: string) {
+export async function fetchTicketsAction(quantity: number, ticketStatus: string) {
   try {
-    // Initialisation manuelle de Firebase
     const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
     const db = getFirestore(app);
 
-    // Récupération depuis la collection 'tickets'
-    // On filtre par type si nécessaire, sinon on prend les X premiers
+    // Récupération STRICTE depuis la collection 'tickets'
+    // On filtre obligatoirement par type (standard ou vip)
     const q = query(
       collection(db, "tickets"),
-      where("type", "==", ticketType),
+      where("type", "==", ticketStatus),
       limit(Math.min(quantity, 500))
     );
 
     const querySnapshot = await getDocs(q);
     
-    // On extrait soit l'ID du document, soit le champ 'code' s'il existe
     const codes = querySnapshot.docs.map(doc => {
       const data = doc.data();
       return data.code || doc.id;
     });
 
+    // Pas de fallback ici pour garantir que si on demande du VIP, on a du VIP.
     if (codes.length === 0) {
-      // Fallback si aucun ticket n'est trouvé pour ce type : on essaie sans filtre de type
-      const fallbackQuery = query(collection(db, "tickets"), limit(quantity));
-      const fallbackSnapshot = await getDocs(fallbackQuery);
-      return fallbackSnapshot.docs.map(doc => doc.data().code || doc.id);
+      throw new Error(`Aucun ticket de type "${ticketStatus}" trouvé dans la base de données.`);
     }
 
     return codes;
   } catch (error: any) {
     console.error("Erreur Firestore lors de la récupération des tickets:", error);
-    throw new Error(error.message || "Impossible de récupérer les tickets depuis Firestore.");
+    throw new Error(error.message || "Impossible de récupérer les tickets officiels.");
   }
 }

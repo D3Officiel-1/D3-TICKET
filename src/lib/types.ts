@@ -1,5 +1,6 @@
 
 export type TicketType = 'event_vip' | 'event' | 'raffle' | 'custom';
+export type TicketStatus = 'standard' | 'vip';
 
 export interface NumberingInstance {
   id: string;
@@ -54,6 +55,7 @@ export interface TicketConfig {
   numberings: NumberingInstance[];
   activeNumberingId: string;
   ticketType: TicketType;
+  ticketStatus: TicketStatus;
   autoContrast?: boolean;
   numberPrefix?: string;
   numberSuffix?: string;
@@ -81,6 +83,7 @@ export const DEFAULT_CONFIG: TicketConfig = {
   ],
   activeNumberingId: 'num-1',
   ticketType: 'event_vip',
+  ticketStatus: 'standard',
   autoContrast: false,
   numberPrefix: "",
   numberSuffix: "",

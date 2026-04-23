@@ -2,13 +2,13 @@
 "use client"
 
 import React, { useState, useEffect } from 'react';
-import { TicketConfig, TicketType, NumberingInstance, QRCodeInstance, DEFAULT_CONFIG, QRCodeDotsType, QRCodeCornersSquareType, QRCodeCornersDotType, QRCodeGradientType } from '@/lib/types';
+import { TicketConfig, TicketType, TicketStatus, NumberingInstance, QRCodeInstance, DEFAULT_CONFIG, QRCodeDotsType, QRCodeCornersSquareType, QRCodeCornersDotType, QRCodeGradientType } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Printer, Image as ImageIcon, Palette, Layers, Ticket, Star, X, Wand2, Ruler, Plus, Target, Sparkles, CheckCheck, FileDown, Loader2, QrCode, RefreshCw, Type, Circle, Square, LayoutGrid, Paintbrush, ChevronDown } from 'lucide-react';
+import { Printer, Image as ImageIcon, Palette, Layers, Ticket, Star, X, Wand2, Ruler, Plus, Target, Sparkles, CheckCheck, FileDown, Loader2, QrCode, RefreshCw, Type, Circle, Square, LayoutGrid, Paintbrush, ChevronDown, ShieldCheck, Crown } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useToast } from '@/hooks/use-toast';
 import { fetchTicketsAction } from '@/app/actions/tickets';
@@ -62,20 +62,21 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
   const fetchCodesFromAPI = async (quantity: number) => {
     setIsFetchingCodes(true);
     try {
-      const codes = await fetchTicketsAction(quantity, config.ticketType);
+      // On utilise ticketStatus (standard/vip) pour la récupération
+      const codes = await fetchTicketsAction(quantity, config.ticketStatus);
       
       updateFields({ fetchedCodes: codes });
       toast({
         title: "Codes récupérés",
-        description: `${codes.length} codes officiels ont été synchronisés avec succès.`,
+        description: `${codes.length} codes ${config.ticketStatus.toUpperCase()} synchronisés.`,
       });
       return codes;
     } catch (error: any) {
       console.error("Erreur récupération codes:", error);
       toast({
         variant: "destructive",
-        title: "Erreur de synchronisation",
-        description: error.message || "Impossible de récupérer les codes officiels.",
+        title: "Erreur critique",
+        description: error.message,
       });
       return [];
     } finally {
@@ -286,7 +287,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
         </h2>
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label>Profil de format</Label>
+            <Label>Profil de format (Dimensions)</Label>
             <Select value={config.ticketType} onValueChange={(v: TicketType) => handleTypeChange(v)}>
               <SelectTrigger className="w-full h-12 font-bold">
                 <SelectValue placeholder="Choisir un format" />
@@ -736,6 +737,41 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
       {/* Series Section */}
       <div>
         <h2 className="text-xl font-bold flex items-center gap-2 mb-6 text-accent"><Sparkles className="w-5 h-5" /> Séries & Numéros</h2>
+        
+        {/* VIP Designation Button */}
+        <div className="mb-6 p-4 bg-accent/5 rounded-2xl border-2 border-accent/20 space-y-3">
+          <Label className="text-xs uppercase font-black text-accent flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4" /> Statut du Ticket (Obligatoire)
+          </Label>
+          <div className="grid grid-cols-2 gap-3">
+            <Button 
+              type="button"
+              variant={config.ticketStatus === 'standard' ? "default" : "outline"}
+              className={cn(
+                "h-12 font-black uppercase tracking-widest gap-2",
+                config.ticketStatus === 'standard' && "bg-accent hover:bg-accent/90"
+              )}
+              onClick={() => updateFields({ ticketStatus: 'standard', fetchedCodes: [] })}
+            >
+              <Ticket className="w-4 h-4" /> Standard
+            </Button>
+            <Button 
+              type="button"
+              variant={config.ticketStatus === 'vip' ? "default" : "outline"}
+              className={cn(
+                "h-12 font-black uppercase tracking-widest gap-2",
+                config.ticketStatus === 'vip' && "bg-primary hover:bg-primary/90"
+              )}
+              onClick={() => updateFields({ ticketStatus: 'vip', fetchedCodes: [] })}
+            >
+              <Crown className="w-4 h-4" /> VIP
+            </Button>
+          </div>
+          <p className="text-[10px] text-muted-foreground font-medium italic">
+            * Désigner comme VIP forcera l'utilisation des codes VIP de Firestore.
+          </p>
+        </div>
+
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label>Quantité</Label>
@@ -759,7 +795,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
         </div>
         {config.fetchedCodes.length > 0 && (
           <p className="mt-2 text-xs font-bold text-green-600 flex items-center gap-1">
-            <CheckCheck className="w-3 h-3" /> {config.fetchedCodes.length} codes chargés depuis Firestore.
+            <CheckCheck className="w-3 h-3" /> {config.fetchedCodes.length} codes <strong>{config.ticketStatus.toUpperCase()}</strong> chargés.
           </p>
         )}
       </div>

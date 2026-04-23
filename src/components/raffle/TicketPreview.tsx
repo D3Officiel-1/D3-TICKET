@@ -243,7 +243,7 @@ const QRCodeItem = ({ qr, displayValue, config, fontScaleFactor, isPrintView, on
   useEffect(() => {
     const qrContent = qr.content
       .replace("[NUM]", displayValue)
-      .replace("[TYPE]", config.ticketType);
+      .replace("[TYPE]", config.ticketStatus); // Utilise ticketStatus pour le type
 
     const size = (qr.size || 40) * (isPrintView ? 4 : 1) * fontScaleFactor;
 
@@ -318,7 +318,7 @@ const QRCodeItem = ({ qr, displayValue, config, fontScaleFactor, isPrintView, on
     } else {
       qrInstance.current.update(qrOptions);
     }
-  }, [qr, displayValue, config.ticketType, fontScaleFactor, isPrintView]);
+  }, [qr, displayValue, config.ticketStatus, fontScaleFactor, isPrintView]);
 
   return (
     <div 
