@@ -1,0 +1,38 @@
+{
+  "entities": {
+    "Ticket": {
+      "title": "Ticket",
+      "description": "Un ticket de tombola ou d'événement généré.",
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "Le code unique du ticket."
+        },
+        "type": {
+          "type": "string",
+          "description": "Le type de ticket (ex: standard, vip)."
+        },
+        "status": {
+          "type": "string",
+          "description": "Statut du ticket (valid, used, etc.)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Date de création."
+        }
+      },
+      "required": ["code", "type"]
+    }
+  },
+  "auth": {
+    "providers": ["google.com"]
+  },
+  "firestore": {
+    "/tickets/{ticketId}": {
+      "schema": "Ticket",
+      "description": "Collection des tickets disponibles."
+    }
+  }
+}
