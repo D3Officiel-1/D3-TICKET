@@ -20,6 +20,7 @@ interface TicketFormProps {
 
 const LIBRARY_STORAGE_KEY = 'd3_tombola_library';
 const API_KEY = 'De3691215';
+const API_URL = 'https://giga-kermesse.vercel.app/api/tickets/bulk';
 
 export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrint }) => {
   const [localLibrary, setLocalLibrary] = useState<string[]>([]);
@@ -60,13 +61,17 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
   const fetchCodesFromAPI = async (quantity: number) => {
     setIsFetchingCodes(true);
     try {
-      const response = await fetch('/api/tickets/bulk', {
+      const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'x-api-key': API_KEY
         },
-        body: JSON.stringify({ quantity })
+        body: JSON.stringify({ 
+          quantity,
+          type: config.ticketType,
+          username: "D3_TOMBOLA_APP"
+        })
       });
 
       if (!response.ok) {
@@ -79,7 +84,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
       updateFields({ fetchedCodes: codes });
       toast({
         title: "Codes récupérés",
-        description: `${codes.length} codes ont été récupérés avec succès.`,
+        description: `${codes.length} codes officiels ont été synchronisés.`,
       });
       return codes;
     } catch (error) {
@@ -87,7 +92,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
       toast({
         variant: "destructive",
         title: "Erreur API",
-        description: "Impossible de récupérer les codes. Vérifiez la clé API ou l'URL.",
+        description: "Impossible de contacter l'API GIGA KERMESSE. Vérifiez votre connexion.",
       });
       return [];
     } finally {
@@ -197,7 +202,6 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
     if (config.fetchedCodes.length < config.quantity) {
       const codes = await fetchCodesFromAPI(config.quantity);
       if (codes.length > 0) {
-        // Wait a bit to ensure state is updated
         setTimeout(action, 100);
       }
     } else {
@@ -467,7 +471,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
                     placeholder="Ex: [NUM] ou https://site.fr/[NUM]"
                     className="bg-white font-medium"
                   />
-                  <p className="text-[10px] text-muted-foreground">Utilisez <strong>[NUM]</strong> pour insérer le code du ticket.</p>
+                  <p className="text-[10px] text-muted-foreground">Utilisez <strong>[NUM]</strong> pour insérer le code récupéré via l'API.</p>
                 </div>
                 <div className="space-y-2">
                   <Label className="text-xs uppercase font-bold text-muted-foreground">Taille (px)</Label>
