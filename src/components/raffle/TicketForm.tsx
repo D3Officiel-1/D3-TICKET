@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -11,6 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Printer, Image as ImageIcon, Palette, Layers, Ticket, Star, X, Wand2, Ruler, Plus, Target, Sparkles, CheckCheck, FileDown, Loader2, QrCode, RefreshCw } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useToast } from '@/hooks/use-toast';
+import { fetchTicketsAction } from '@/app/actions/tickets';
 
 interface TicketFormProps {
   config: TicketConfig;
@@ -19,8 +19,6 @@ interface TicketFormProps {
 }
 
 const LIBRARY_STORAGE_KEY = 'd3_tombola_library';
-const API_KEY = 'De3691215';
-const API_URL = 'https://giga-kermesse.vercel.app/api/tickets/bulk';
 
 export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrint }) => {
   const [localLibrary, setLocalLibrary] = useState<string[]>([]);
@@ -61,38 +59,20 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
   const fetchCodesFromAPI = async (quantity: number) => {
     setIsFetchingCodes(true);
     try {
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': API_KEY
-        },
-        body: JSON.stringify({ 
-          quantity,
-          type: config.ticketType,
-          username: "D3_TOMBOLA_APP"
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`Erreur API: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const codes = Array.isArray(data) ? data : (data.codes || []);
+      const codes = await fetchTicketsAction(quantity, config.ticketType);
       
       updateFields({ fetchedCodes: codes });
       toast({
         title: "Codes récupérés",
-        description: `${codes.length} codes officiels ont été synchronisés.`,
+        description: `${codes.length} codes officiels ont été synchronisés avec succès.`,
       });
       return codes;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erreur récupération codes:", error);
       toast({
         variant: "destructive",
-        title: "Erreur API",
-        description: "Impossible de contacter l'API GIGA KERMESSE. Vérifiez votre connexion.",
+        title: "Erreur de synchronisation",
+        description: error.message || "Impossible de récupérer les codes officiels.",
       });
       return [];
     } finally {
@@ -201,7 +181,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
   const prepareAndAction = async (action: () => void) => {
     if (config.fetchedCodes.length < config.quantity) {
       const codes = await fetchCodesFromAPI(config.quantity);
-      if (codes.length > 0) {
+      if (codes && codes.length > 0) {
         setTimeout(action, 100);
       }
     } else {
