@@ -1,38 +1,45 @@
 'use server';
 
 /**
- * @fileOverview Action serveur pour la récupération sécurisée des codes de tickets.
- * - fetchTicketsAction - Appelle l'API GIGA KERMESSE pour générer des codes uniques.
+ * @fileOverview Action serveur pour la récupération des codes depuis Firestore.
  */
 
-const API_KEY = 'De3691215';
-const API_URL = 'https://giga-kermesse.vercel.app/api/tickets/bulk';
+import { initializeApp, getApps } from "firebase/app";
+import { getFirestore, collection, query, where, limit, getDocs } from "firebase/firestore";
+import { firebaseConfig } from "@/firebase/config";
 
 export async function fetchTicketsAction(quantity: number, ticketType: string) {
   try {
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': API_KEY
-      },
-      body: JSON.stringify({ 
-        quantity,
-        type: ticketType,
-        username: "D3_TOMBOLA_APP"
-      }),
-      cache: 'no-store'
+    // Initialisation manuelle de Firebase
+    const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+    const db = getFirestore(app);
+
+    // Récupération depuis la collection 'tickets'
+    // On filtre par type si nécessaire, sinon on prend les X premiers
+    const q = query(
+      collection(db, "tickets"),
+      where("type", "==", ticketType),
+      limit(Math.min(quantity, 500))
+    );
+
+    const querySnapshot = await getDocs(q);
+    
+    // On extrait soit l'ID du document, soit le champ 'code' s'il existe
+    const codes = querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      return data.code || doc.id;
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Erreur API ${response.status}: ${errorText || 'Réponse invalide'}`);
+    if (codes.length === 0) {
+      // Fallback si aucun ticket n'est trouvé pour ce type : on essaie sans filtre de type
+      const fallbackQuery = query(collection(db, "tickets"), limit(quantity));
+      const fallbackSnapshot = await getDocs(fallbackQuery);
+      return fallbackSnapshot.docs.map(doc => doc.data().code || doc.id);
     }
 
-    const data = await response.json();
-    return Array.isArray(data) ? data : (data.codes || []);
+    return codes;
   } catch (error: any) {
-    console.error("Erreur lors de l'appel à l'API de tickets:", error);
-    throw new Error(error.message || "Impossible de contacter le serveur de tickets.");
+    console.error("Erreur Firestore lors de la récupération des tickets:", error);
+    throw new Error(error.message || "Impossible de récupérer les tickets depuis Firestore.");
   }
 }

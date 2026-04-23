@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useMemo, useRef, useState, useEffect, useCallback } from 'react';
@@ -22,13 +21,18 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
   const qrCodes = config.qrCodes || DEFAULT_CONFIG.qrCodes;
 
   const displayValue = useMemo(() => {
-    if (number === "" || number === undefined) {
-      if (!isPrintView && config.fetchedCodes.length > 0) {
-        return config.fetchedCodes[0];
-      }
-      return isPrintView ? "" : "00001";
+    // Si un numéro est explicitement fourni (cas de l'impression), on l'utilise
+    if (number !== undefined && number !== null && number !== "") {
+      return String(number);
     }
-    return String(number);
+    
+    // En mode prévisualisation (pas d'impression), on prend le premier code récupéré s'il existe
+    if (!isPrintView && config.fetchedCodes && config.fetchedCodes.length > 0) {
+      return config.fetchedCodes[0];
+    }
+    
+    // Valeur par défaut pour l'éditeur
+    return isPrintView ? "" : "00001";
   }, [number, isPrintView, config.fetchedCodes]);
 
   const imageUrl = isVerso ? config.versoBackgroundImage : config.backgroundImage;

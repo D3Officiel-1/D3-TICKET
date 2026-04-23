@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useMemo } from 'react';
@@ -11,11 +10,12 @@ interface PrintSheetProps {
 
 export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
   const tickets = useMemo(() => {
-    if (config.fetchedCodes && config.fetchedCodes.length >= config.quantity) {
+    // Priorité absolue aux codes récupérés (même si moins nombreux que la quantité demandée)
+    if (config.fetchedCodes && config.fetchedCodes.length > 0) {
       return config.fetchedCodes.slice(0, config.quantity);
     }
     
-    // Fallback if API codes aren't available
+    // Fallback de génération locale si aucun code n'est chargé
     const list = [];
     if (config.generationMode === 'sequential') {
       for (let i = 0; i < config.quantity; i++) {
@@ -35,11 +35,9 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
     const w = config.ticketWidth || 140;
     const h = config.ticketHeight || 70;
 
-    // Dimensions d'une page A4 en mm
     const pageW = 210;
     const pageH = 297;
 
-    // Calcul dynamique du nombre de tickets par ligne et par colonne
     const cols = Math.floor(pageW / w) || 1;
     const rows = Math.floor(pageH / h) || 1;
     const ticketsPerPage = cols * rows;
@@ -63,7 +61,6 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
 
   return (
     <div id="print-sheet-container" className="hidden print:block bg-white w-[210mm] mx-auto">
-      {/* SECTION RECTOS */}
       <div className="rectos-section">
         {pages.map((pageTickets, pageIdx) => (
           <div 
@@ -91,7 +88,6 @@ export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
         ))}
       </div>
 
-      {/* SECTION VERSOS */}
       {config.hasVerso && (
         <div className="versos-section">
           {pages.map((pageTickets, pageIdx) => (
