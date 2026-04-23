@@ -11,20 +11,25 @@ interface PrintSheetProps {
 
 export const PrintSheet: React.FC<PrintSheetProps> = ({ config }) => {
   const tickets = useMemo(() => {
+    if (config.fetchedCodes && config.fetchedCodes.length >= config.quantity) {
+      return config.fetchedCodes.slice(0, config.quantity);
+    }
+    
+    // Fallback if API codes aren't available
     const list = [];
     if (config.generationMode === 'sequential') {
       for (let i = 0; i < config.quantity; i++) {
-        list.push(config.startingNumber + i);
+        list.push(String(config.startingNumber + i).padStart(5, '0'));
       }
     } else {
       const uniqueRandoms = new Set<number>();
       while (uniqueRandoms.size < config.quantity) {
         uniqueRandoms.add(Math.floor(Math.random() * 99999) + 1);
       }
-      list.push(...Array.from(uniqueRandoms));
+      list.push(...Array.from(uniqueRandoms).map(n => String(n).padStart(5, '0')));
     }
     return list;
-  }, [config.quantity, config.startingNumber, config.generationMode]);
+  }, [config.quantity, config.startingNumber, config.generationMode, config.fetchedCodes]);
 
   const layout = useMemo(() => {
     const w = config.ticketWidth || 140;

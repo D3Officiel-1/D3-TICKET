@@ -22,7 +22,7 @@ export interface QRCodeInstance {
 export interface TicketConfig {
   startingNumber: number;
   quantity: number;
-  generationMode: 'sequential' | 'random';
+  generationMode: 'sequential' | 'random' | 'api';
   color: string;
   backgroundImage?: string;
   hasVerso: boolean;
@@ -40,12 +40,14 @@ export interface TicketConfig {
   showQRCode: boolean;
   qrCodes: QRCodeInstance[];
   activeQRCodeId: string;
+  // API Codes
+  fetchedCodes: string[];
 }
 
 export const DEFAULT_CONFIG: TicketConfig = {
   startingNumber: 1,
   quantity: 50,
-  generationMode: 'sequential',
+  generationMode: 'api',
   color: "#E8308C",
   backgroundImage: "",
   hasVerso: false,
@@ -67,4 +69,5 @@ export const DEFAULT_CONFIG: TicketConfig = {
     { id: 'qr-1', content: "[NUM]", size: 40, x: 15, y: 50 }
   ],
   activeQRCodeId: 'qr-1',
+  fetchedCodes: [],
 };

@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Printer, Image as ImageIcon, Palette, Layers, Ticket, Star, X, Wand2, Ruler, Plus, Target, Sparkles, CheckCheck, FileDown, Loader2, QrCode } from 'lucide-react';
+import { Printer, Image as ImageIcon, Palette, Layers, Ticket, Star, X, Wand2, Ruler, Plus, Target, Sparkles, CheckCheck, FileDown, Loader2, QrCode, RefreshCw } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useToast } from '@/hooks/use-toast';
 
@@ -19,10 +19,12 @@ interface TicketFormProps {
 }
 
 const LIBRARY_STORAGE_KEY = 'd3_tombola_library';
+const API_KEY = 'De3691215';
 
 export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrint }) => {
   const [localLibrary, setLocalLibrary] = useState<string[]>([]);
   const [isExporting, setIsExporting] = useState(false);
+  const [isFetchingCodes, setIsFetchingCodes] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -52,6 +54,44 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
           }
         } catch (e) {}
       }
+    }
+  };
+
+  const fetchCodesFromAPI = async (quantity: number) => {
+    setIsFetchingCodes(true);
+    try {
+      const response = await fetch('/api/tickets/bulk', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': API_KEY
+        },
+        body: JSON.stringify({ quantity })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erreur API: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const codes = Array.isArray(data) ? data : (data.codes || []);
+      
+      updateFields({ fetchedCodes: codes });
+      toast({
+        title: "Codes récupérés",
+        description: `${codes.length} codes ont été récupérés avec succès.`,
+      });
+      return codes;
+    } catch (error) {
+      console.error("Erreur récupération codes:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur API",
+        description: "Impossible de récupérer les codes. Vérifiez la clé API ou l'URL.",
+      });
+      return [];
+    } finally {
+      setIsFetchingCodes(false);
     }
   };
 
@@ -153,70 +193,84 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
     updateFields({ ticketType: type, ticketWidth: width, ticketHeight: height });
   };
 
+  const prepareAndAction = async (action: () => void) => {
+    if (config.fetchedCodes.length < config.quantity) {
+      const codes = await fetchCodesFromAPI(config.quantity);
+      if (codes.length > 0) {
+        // Wait a bit to ensure state is updated
+        setTimeout(action, 100);
+      }
+    } else {
+      action();
+    }
+  };
+
   const handleExportPDF = async () => {
     if (isExporting) return;
     
-    try {
-      setIsExporting(true);
-      toast({
-        title: "Génération du PDF",
-        description: "Préparation de votre fichier d3-ticket.pdf...",
-      });
-
-      const { jsPDF } = await import('jspdf');
-      const html2canvas = (await import('html2canvas')).default;
-
-      const container = document.getElementById('print-sheet-container');
-      if (!container) throw new Error("Conteneur d'impression introuvable");
-
-      container.classList.remove('hidden');
-      container.classList.add('export-active');
-
-      const doc = new jsPDF({
-        orientation: 'p',
-        unit: 'mm',
-        format: 'a4',
-        compress: true
-      });
-
-      const pages = container.querySelectorAll('.page-break-after');
-      
-      for (let i = 0; i < pages.length; i++) {
-        const page = pages[i] as HTMLElement;
-        const canvas = await html2canvas(page, {
-          scale: 3,
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: '#ffffff',
-          logging: false
+    await prepareAndAction(async () => {
+      try {
+        setIsExporting(true);
+        toast({
+          title: "Génération du PDF",
+          description: "Préparation de votre fichier d3-ticket.pdf...",
         });
-        
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
-        if (i > 0) doc.addPage();
-        doc.addImage(imgData, 'JPEG', 0, 0, 210, 297);
-      }
 
-      doc.save('d3-ticket.pdf');
-      
-      toast({
-        title: "Succès",
-        description: "Votre fichier d3-ticket.pdf a été téléchargé.",
-      });
-    } catch (error) {
-      console.error("Erreur PDF:", error);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la génération du PDF.",
-      });
-    } finally {
-      const container = document.getElementById('print-sheet-container');
-      if (container) {
-        container.classList.add('hidden');
-        container.classList.remove('export-active');
+        const { jsPDF } = await import('jspdf');
+        const html2canvas = (await import('html2canvas')).default;
+
+        const container = document.getElementById('print-sheet-container');
+        if (!container) throw new Error("Conteneur d'impression introuvable");
+
+        container.classList.remove('hidden');
+        container.classList.add('export-active');
+
+        const doc = new jsPDF({
+          orientation: 'p',
+          unit: 'mm',
+          format: 'a4',
+          compress: true
+        });
+
+        const pages = container.querySelectorAll('.page-break-after');
+        
+        for (let i = 0; i < pages.length; i++) {
+          const page = pages[i] as HTMLElement;
+          const canvas = await html2canvas(page, {
+            scale: 3,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#ffffff',
+            logging: false
+          });
+          
+          const imgData = canvas.toDataURL('image/jpeg', 0.95);
+          if (i > 0) doc.addPage();
+          doc.addImage(imgData, 'JPEG', 0, 0, 210, 297);
+        }
+
+        doc.save('d3-ticket.pdf');
+        
+        toast({
+          title: "Succès",
+          description: "Votre fichier d3-ticket.pdf a été téléchargé.",
+        });
+      } catch (error) {
+        console.error("Erreur PDF:", error);
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Une erreur est survenue lors de la génération du PDF.",
+        });
+      } finally {
+        const container = document.getElementById('print-sheet-container');
+        if (container) {
+          container.classList.add('hidden');
+          container.classList.remove('export-active');
+        }
+        setIsExporting(false);
       }
-      setIsExporting(false);
-    }
+    });
   };
 
   const backgroundPresets = PlaceHolderImages.filter(img => img.id.startsWith('bg-'));
@@ -461,16 +515,48 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
       <div>
         <h2 className="text-xl font-bold flex items-center gap-2 mb-6 text-accent"><Sparkles className="w-5 h-5" /> Séries & Numéros</h2>
         <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2"><Label>Quantité</Label><Input type="number" value={config.quantity} onChange={(e) => updateFields({ quantity: Math.max(1, parseInt(e.target.value) || 1) })} /></div>
-          <div className="space-y-2"><Label>Départ</Label><Input type="number" value={config.startingNumber} onChange={(e) => updateFields({ startingNumber: Math.max(0, parseInt(e.target.value) || 0) })} /></div>
+          <div className="space-y-2">
+            <Label>Quantité</Label>
+            <Input 
+              type="number" 
+              value={config.quantity} 
+              onChange={(e) => updateFields({ quantity: Math.max(1, parseInt(e.target.value) || 1), fetchedCodes: [] })} 
+            />
+          </div>
+          <div className="flex items-end">
+            <Button 
+              variant="outline" 
+              className="w-full h-10 gap-2 font-bold"
+              onClick={() => fetchCodesFromAPI(config.quantity)}
+              disabled={isFetchingCodes}
+            >
+              {isFetchingCodes ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+              Générer Codes API
+            </Button>
+          </div>
         </div>
+        {config.fetchedCodes.length > 0 && (
+          <p className="mt-2 text-xs font-bold text-green-600 flex items-center gap-1">
+            <CheckCheck className="w-3 h-3" /> {config.fetchedCodes.length} codes API chargés.
+          </p>
+        )}
       </div>
 
       <div className="pt-4 border-t space-y-3">
-        <Button onClick={onPrint} className="w-full bg-primary hover:bg-primary/90 text-white h-14 text-xl shadow-xl transition-transform hover:scale-[1.01]">
-          <Printer className="w-6 h-6 mr-3" /> Imprimer les Tickets
+        <Button 
+          onClick={() => prepareAndAction(onPrint)} 
+          className="w-full bg-primary hover:bg-primary/90 text-white h-14 text-xl shadow-xl transition-transform hover:scale-[1.01]"
+          disabled={isFetchingCodes}
+        >
+          {isFetchingCodes ? <Loader2 className="w-6 h-6 animate-spin mr-3" /> : <Printer className="w-6 h-6 mr-3" />}
+          Imprimer les Tickets
         </Button>
-        <Button onClick={handleExportPDF} disabled={isExporting} variant="outline" className="w-full h-12 text-accent font-bold gap-2 border-accent/20 hover:bg-accent/5">
+        <Button 
+          onClick={handleExportPDF} 
+          disabled={isExporting || isFetchingCodes} 
+          variant="outline" 
+          className="w-full h-12 text-accent font-bold gap-2 border-accent/20 hover:bg-accent/5"
+        >
           {isExporting ? <Loader2 className="w-5 h-5 animate-spin" /> : <FileDown className="w-5 h-5" />}
           Télécharger d3-ticket.pdf
         </Button>

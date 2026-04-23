@@ -22,9 +22,14 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
   const qrCodes = config.qrCodes || DEFAULT_CONFIG.qrCodes;
 
   const displayValue = useMemo(() => {
-    if (number === "") return "";
-    return String(number).padStart(5, '0');
-  }, [number]);
+    if (number === "" || number === undefined) {
+      if (!isPrintView && config.fetchedCodes.length > 0) {
+        return config.fetchedCodes[0];
+      }
+      return isPrintView ? "" : "00001";
+    }
+    return String(number);
+  }, [number, isPrintView, config.fetchedCodes]);
 
   const imageUrl = isVerso ? config.versoBackgroundImage : config.backgroundImage;
 
