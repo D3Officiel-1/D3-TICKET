@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useMemo, useRef, useState, useEffect, useCallback } from 'react';
@@ -92,6 +91,48 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
     updatePosition(e.clientX, e.clientY);
   }, [dragTarget, updatePosition]);
 
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (!onConfigChange || isVerso || isPrintView) return;
+    
+    // Raccourcis pour QR Code Actif
+    if (config.activeQRCodeId && (e.ctrlKey || e.metaKey)) {
+      const currentQRs = qrCodes;
+      const activeQR = currentQRs.find(q => q.id === config.activeQRCodeId);
+      if (!activeQR) return;
+
+      let updated = false;
+      const newQRs = currentQRs.map(q => {
+        if (q.id === config.activeQRCodeId) {
+          if (e.key === '+' || e.key === '=') {
+            e.preventDefault();
+            updated = true;
+            return { ...q, size: (q.size || 40) + 2 };
+          }
+          if (e.key === '-') {
+            e.preventDefault();
+            updated = true;
+            return { ...q, size: Math.max(10, (q.size || 40) - 2) };
+          }
+          if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            updated = true;
+            return { ...q, rotation: ((q.rotation || 0) - 5) % 360 };
+          }
+          if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            updated = true;
+            return { ...q, rotation: ((q.rotation || 0) + 5) % 360 };
+          }
+        }
+        return q;
+      });
+
+      if (updated) {
+        onConfigChange({ ...config, qrCodes: newQRs });
+      }
+    }
+  }, [config, onConfigChange, isVerso, isPrintView, qrCodes]);
+
   useEffect(() => {
     if (dragTarget) {
       window.addEventListener('mousemove', handleMouseMove);
@@ -105,6 +146,11 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
       window.removeEventListener('mouseup', handleMouseUp);
     };
   }, [dragTarget, handleMouseMove, handleMouseUp]);
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
 
   const previewStyles = useMemo(() => {
     if (isPrintView) return { width: '100%', height: '100%' };
@@ -194,7 +240,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
             style={{
               left: `${qr.x}%`,
               top: `${qr.y}%`,
-              transform: `translate(-50%, -50%)`,
+              transform: `translate(-50%, -50%) rotate(${qr.rotation || 0}deg)`,
               width: `${(qr.size || 40) * fontScaleFactor}px`,
               height: `${(qr.size || 40) * fontScaleFactor}px`,
               backgroundColor: qr.bgColor || "#FFFFFF",

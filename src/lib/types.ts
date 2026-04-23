@@ -20,6 +20,7 @@ export interface QRCodeInstance {
   bgColor?: string;
   margin?: number;
   level?: 'L' | 'M' | 'Q' | 'H';
+  rotation?: number;
 }
 
 export interface TicketConfig {
@@ -78,7 +79,8 @@ export const DEFAULT_CONFIG: TicketConfig = {
       fgColor: "#000000",
       bgColor: "#FFFFFF",
       margin: 2,
-      level: 'H'
+      level: 'H',
+      rotation: 0
     }
   ],
   activeQRCodeId: 'qr-1',

@@ -141,7 +141,8 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
       fgColor: "#000000",
       bgColor: "#FFFFFF",
       margin: 2,
-      level: 'H'
+      level: 'H',
+      rotation: 0
     };
     const currentQRs = config.qrCodes || DEFAULT_CONFIG.qrCodes;
     updateFields({ 
@@ -453,7 +454,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
                     placeholder="Ex: [NUM] ou https://site.fr/[NUM]"
                     className="bg-white font-medium"
                   />
-                  <p className="text-[10px] text-muted-foreground">Utilisez <strong>[NUM]</strong> pour insérer le code récupéré via l'API.</p>
+                  <p className="text-[10px] text-muted-foreground">Utilisez <strong>[NUM]</strong> pour insérer le code récupéré via l'API. <br /><strong>Astuce :</strong> Utilisez <strong>Ctrl +/-</strong> pour la taille et <strong>Ctrl ←/→</strong> pour pivoter.</p>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
@@ -463,6 +464,27 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
                       type="number"
                       value={activeQR.size}
                       onChange={(e) => updateActiveQRCode({ size: Math.max(10, parseInt(e.target.value) || 10) })}
+                      className="bg-white font-bold"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase font-bold text-muted-foreground">Rotation (°)</Label>
+                    <Input 
+                      type="number"
+                      value={activeQR.rotation || 0}
+                      onChange={(e) => updateActiveQRCode({ rotation: parseInt(e.target.value) || 0 })}
+                      className="bg-white font-bold"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase font-bold text-muted-foreground">Marge (px)</Label>
+                    <Input 
+                      type="number"
+                      value={activeQR.margin || 0}
+                      onChange={(e) => updateActiveQRCode({ margin: Math.max(0, parseInt(e.target.value) || 0) })}
                       className="bg-white font-bold"
                     />
                   </div>
@@ -506,17 +528,6 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
                         />
                       </div>
                     </div>
-                  </div>
-                  
-                  <div className="space-y-2 mt-2">
-                    <Label className="text-xs uppercase font-bold text-muted-foreground">Marge de sécurité (modules)</Label>
-                    <Input 
-                      type="number"
-                      value={activeQR.margin}
-                      onChange={(e) => updateActiveQRCode({ margin: Math.max(0, parseInt(e.target.value) || 0) })}
-                      className="bg-white font-bold h-10"
-                      placeholder="Ex: 2"
-                    />
                   </div>
                 </div>
               </div>
