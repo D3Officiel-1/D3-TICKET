@@ -94,7 +94,6 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (!onConfigChange || isVerso || isPrintView) return;
     
-    // Raccourcis pour QR Code Actif
     if (config.activeQRCodeId && (e.ctrlKey || e.metaKey)) {
       const currentQRs = qrCodes;
       const activeQR = currentQRs.find(q => q.id === config.activeQRCodeId);
@@ -220,7 +219,11 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
       })}
 
       {!isVerso && config.showQRCode && qrCodes.map((qr) => {
-        const qrContent = qr.content.replace("[NUM]", displayValue);
+        // Remplacement dynamique des placeholders
+        const qrContent = qr.content
+          .replace("[NUM]", displayValue)
+          .replace("[TYPE]", config.ticketType);
+          
         const marginPx = (qr.margin || 0) * fontScaleFactor;
         
         return (

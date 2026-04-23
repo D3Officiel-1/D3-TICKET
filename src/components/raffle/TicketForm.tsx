@@ -454,7 +454,10 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
                     placeholder="Ex: [NUM] ou https://site.fr/[NUM]"
                     className="bg-white font-medium"
                   />
-                  <p className="text-[10px] text-muted-foreground">Utilisez <strong>[NUM]</strong> pour insérer le code récupéré via l'API. <br /><strong>Astuce :</strong> Utilisez <strong>Ctrl +/-</strong> pour la taille et <strong>Ctrl ←/→</strong> pour pivoter.</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    Utilisez <strong>[NUM]</strong> pour le code et <strong>[TYPE]</strong> pour le type de ticket.
+                    <br /><strong>Astuce :</strong> Utilisez <strong>Ctrl +/-</strong> pour la taille et <strong>Ctrl ←/→</strong> pour pivoter.
+                  </p>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
