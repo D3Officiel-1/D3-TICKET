@@ -28,6 +28,12 @@ export interface TicketConfig {
   ticketWidth: number; // en mm
   ticketHeight: number; // en mm
   showNumbering: boolean;
+  // QR Code Config
+  showQRCode: boolean;
+  qrCodeContent: string;
+  qrCodeSize: number;
+  qrCodeX: number;
+  qrCodeY: number;
 }
 
 export const DEFAULT_CONFIG: TicketConfig = {
@@ -49,4 +55,10 @@ export const DEFAULT_CONFIG: TicketConfig = {
   ticketWidth: 140,
   ticketHeight: 70,
   showNumbering: true,
+  // Default QR Code Values
+  showQRCode: false,
+  qrCodeContent: "TICKET-[NUM]",
+  qrCodeSize: 40,
+  qrCodeX: 15,
+  qrCodeY: 50,
 };

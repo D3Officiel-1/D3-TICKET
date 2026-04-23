@@ -4,6 +4,7 @@
 import React, { useMemo, useRef, useState, useEffect, useCallback } from 'react';
 import { TicketConfig, NumberingInstance, DEFAULT_CONFIG } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import { QRCodeCanvas } from 'qrcode.react';
 
 interface TicketPreviewProps {
   config: TicketConfig;
@@ -15,7 +16,7 @@ interface TicketPreviewProps {
 
 export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, isPrintView = false, isVerso = false, onConfigChange }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
+  const [dragTarget, setDragTarget] = useState<'number' | 'qrcode' | null>(null);
 
   const numberings = config.numberings || DEFAULT_CONFIG.numberings;
 
@@ -24,6 +25,12 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
     const formattedNum = String(number).padStart(5, '0');
     return `${config.numberPrefix || ''}${formattedNum}${config.numberSuffix || ''}`;
   }, [number, config.numberPrefix, config.numberSuffix]);
+
+  const qrValue = useMemo(() => {
+    if (number === "") return config.qrCodeContent || "";
+    const formattedNum = String(number).padStart(5, '0');
+    return (config.qrCodeContent || "").replace("[NUM]", formattedNum);
+  }, [number, config.qrCodeContent]);
 
   const imageUrl = isVerso ? config.versoBackgroundImage : config.backgroundImage;
 
@@ -37,13 +44,11 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
     }
   }, [imageUrl]);
 
-  // Calcule le facteur d'échelle pour que le prototype (550px) corresponde proportionnellement au rendu réel (en mm)
   const fontScaleFactor = useMemo(() => {
     if (isPrintView) return 1;
     const wMm = config.ticketWidth || 140;
-    // 1mm = 3.7795 px environ à 96dpi
     const naturalWidthPx = wMm * 3.7795275591;
-    const displayWidthPx = 550; // Largeur du conteneur de preview
+    const displayWidthPx = 550;
     return displayWidthPx / naturalWidthPx;
   }, [config.ticketWidth, isPrintView]);
 
@@ -110,77 +115,45 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
   }, [imageUrl, isValidUrl, isVerso, config, onConfigChange, numberings, detectBestColorForPoint]);
 
   const updatePosition = useCallback((clientX: number, clientY: number) => {
-    if (!containerRef.current || !onConfigChange || isVerso || !config.showNumbering) return;
+    if (!containerRef.current || !onConfigChange || isVerso || !dragTarget) return;
 
     const rect = containerRef.current.getBoundingClientRect();
     const x = ((clientX - rect.left) / rect.width) * 100;
     const y = ((clientY - rect.top) / rect.height) * 100;
 
-    const newNumberings = numberings.map(n => 
-      n.id === config.activeNumberingId 
-        ? { ...n, x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) }
-        : n
-    );
+    if (dragTarget === 'number' && config.showNumbering) {
+      const newNumberings = numberings.map(n => 
+        n.id === config.activeNumberingId 
+          ? { ...n, x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) }
+          : n
+      );
+      onConfigChange({ ...config, numberings: newNumberings });
+    } else if (dragTarget === 'qrcode' && config.showQRCode) {
+      onConfigChange({ 
+        ...config, 
+        qrCodeX: Math.max(0, Math.min(100, x)), 
+        qrCodeY: Math.max(0, Math.min(100, y)) 
+      });
+    }
+  }, [config, onConfigChange, isVerso, dragTarget, numberings]);
 
-    onConfigChange({ ...config, numberings: newNumberings });
-  }, [config, onConfigChange, isVerso, numberings]);
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (isPrintView || !onConfigChange || isVerso || !config.showNumbering) return;
-    setIsDragging(true);
+  const handleMouseDown = (e: React.MouseEvent, target: 'number' | 'qrcode') => {
+    if (isPrintView || !onConfigChange || isVerso) return;
+    setDragTarget(target);
     updatePosition(e.clientX, e.clientY);
   };
 
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!isDragging) return;
-    updatePosition(e.clientX, e.clientY);
-  }, [isDragging, updatePosition]);
-
   const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
+    setDragTarget(null);
   }, []);
 
-  useEffect(() => {
-    if (isPrintView || !onConfigChange || isVerso || !config.showNumbering) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const activeNum = numberings.find(n => n.id === config.activeNumberingId);
-      if (!activeNum) return;
-
-      if (e.ctrlKey || e.metaKey) {
-        if (e.key === '+' || e.key === '=' || e.key === '-') {
-          e.preventDefault();
-          const step = 2;
-          let newSize = activeNum.size;
-          if (e.key === '+' || e.key === '=') newSize = Math.min(150, activeNum.size + step);
-          else if (e.key === '-') newSize = Math.max(6, activeNum.size - step);
-          
-          if (newSize !== activeNum.size) {
-            const newNumberings = numberings.map(n => n.id === activeNum.id ? { ...n, size: newSize } : n);
-            onConfigChange({ ...config, numberings: newNumberings });
-          }
-        }
-        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-          e.preventDefault();
-          const step = 1;
-          let newRotation = activeNum.rotation;
-          if (e.key === 'ArrowRight') newRotation = (activeNum.rotation + step) % 360;
-          else if (e.key === 'ArrowLeft') newRotation = (activeNum.rotation - step + 360) % 360;
-          
-          if (newRotation !== activeNum.rotation) {
-            const newNumberings = numberings.map(n => n.id === activeNum.id ? { ...n, rotation: newRotation } : n);
-            onConfigChange({ ...config, numberings: newNumberings });
-          }
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [config, onConfigChange, isPrintView, isVerso, numberings]);
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!dragTarget) return;
+    updatePosition(e.clientX, e.clientY);
+  }, [dragTarget, updatePosition]);
 
   useEffect(() => {
-    if (isDragging) {
+    if (dragTarget) {
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
     } else {
@@ -191,7 +164,7 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, handleMouseMove, handleMouseUp]);
+  }, [dragTarget, handleMouseMove, handleMouseUp]);
 
   const previewStyles = useMemo(() => {
     if (isPrintView) return { width: '100%', height: '100%' };
@@ -208,10 +181,12 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
       className={cn(
         "relative bg-white overflow-hidden transition-all duration-300",
         isPrintView ? "" : "shadow-2xl rounded-xl group select-none cursor-move",
-        isDragging && "scale-[1.01] transition-transform z-50 ring-4 ring-primary/30"
+        dragTarget && "scale-[1.01] transition-transform z-50 ring-4 ring-primary/30"
       )}
       style={previewStyles}
-      onMouseDown={handleMouseDown}
+      onMouseDown={(e) => {
+        if (!dragTarget) handleMouseDown(e, 'number');
+      }}
     >
       {isValidUrl && imageUrl ? (
         <img 
@@ -230,21 +205,21 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
 
       {!isVerso && config.showNumbering && displayValue !== "" && numberings.map((num) => {
         const currentColor = num.color || config.color;
-        // La taille est multipliée par fontScaleFactor en preview pour rester proportionnelle
         const finalSize = num.size * fontScaleFactor;
         
         return (
           <div 
             key={num.id}
-            onClick={(e) => {
-              if (isPrintView || !onConfigChange) return;
+            onMouseDown={(e) => {
               e.stopPropagation();
+              if (isPrintView || !onConfigChange) return;
               onConfigChange({ ...config, activeNumberingId: num.id });
+              handleMouseDown(e, 'number');
             }}
             className={cn(
               "absolute font-bold whitespace-nowrap select-none z-20 origin-center transition-opacity",
               !isPrintView && "cursor-pointer pointer-events-auto",
-              isDragging && num.id === config.activeNumberingId ? "opacity-80" : "opacity-100",
+              dragTarget === 'number' && num.id === config.activeNumberingId ? "opacity-80" : "opacity-100",
               !isPrintView && num.id === config.activeNumberingId && "ring-2 ring-primary ring-offset-2 rounded-sm"
             )}
             style={{ 
@@ -263,19 +238,32 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
         );
       })}
 
-      {!isPrintView && !isVerso && !isDragging && (
-        <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity pointer-events-none">
-          <div className="flex flex-col items-center gap-2">
-            <span className="bg-white/95 text-accent px-4 py-2 rounded-full font-bold shadow-lg border border-accent/20">
-              Format: {config.ticketWidth}x{config.ticketHeight}mm
-            </span>
-            {config.showNumbering && (
-              <div className="flex flex-wrap justify-center gap-1">
-                <span className="bg-primary/95 text-white text-[11px] px-3 py-1 rounded-full font-bold shadow-md">Ctrl + / - : Taille</span>
-                <span className="bg-accent/95 text-white text-[11px] px-3 py-1 rounded-full font-bold shadow-md">Ctrl + ← → : Rotation</span>
-              </div>
-            )}
-          </div>
+      {!isVerso && config.showQRCode && (
+        <div 
+          onMouseDown={(e) => {
+            e.stopPropagation();
+            handleMouseDown(e, 'qrcode');
+          }}
+          className={cn(
+            "absolute z-30 transition-opacity",
+            !isPrintView && "cursor-move pointer-events-auto",
+            dragTarget === 'qrcode' ? "opacity-70" : "opacity-100",
+            !isPrintView && "hover:ring-2 hover:ring-primary hover:ring-offset-2"
+          )}
+          style={{
+            left: `${config.qrCodeX}%`,
+            top: `${config.qrCodeY}%`,
+            transform: `translate(-50%, -50%)`,
+            width: `${(config.qrCodeSize || 40) * fontScaleFactor}px`,
+            height: `${(config.qrCodeSize || 40) * fontScaleFactor}px`,
+          }}
+        >
+          <QRCodeCanvas 
+            value={qrValue} 
+            size={(config.qrCodeSize || 40) * (isPrintView ? 4 : 1)} // Higher resolution for printing
+            style={{ width: '100%', height: '100%' }}
+            level="H"
+          />
         </div>
       )}
     </div>

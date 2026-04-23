@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Printer, Image as ImageIcon, Palette, Layers, Ticket, Star, X, Wand2, Ruler, Plus, Target, Sparkles, CheckCheck, FileDown, Loader2 } from 'lucide-react';
+import { Printer, Image as ImageIcon, Palette, Layers, Ticket, Star, X, Wand2, Ruler, Plus, Target, Sparkles, CheckCheck, FileDown, Loader2, QrCode } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useToast } from '@/hooks/use-toast';
 
@@ -128,14 +128,12 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
         description: "Préparation de votre fichier d3-ticket.pdf (cela peut prendre quelques instants)...",
       });
 
-      // Importation dynamique des bibliothèques lourdes
       const { jsPDF } = await import('jspdf');
       const html2canvas = (await import('html2canvas')).default;
 
       const container = document.getElementById('print-sheet-container');
       if (!container) throw new Error("Conteneur d'impression introuvable");
 
-      // Temporairement rendre le conteneur visible pour html2canvas mais hors écran
       container.classList.remove('hidden');
       container.classList.add('export-active');
 
@@ -151,13 +149,12 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
       for (let i = 0; i < pages.length; i++) {
         const page = pages[i] as HTMLElement;
         const canvas = await html2canvas(page, {
-          scale: 3, // Augmentation de la qualité
+          scale: 3,
           useCORS: true,
           allowTaint: true,
           backgroundColor: '#ffffff',
           logging: false,
           onclone: (clonedDoc) => {
-            // S'assurer que les polices et images sont bien chargées dans le clone
             const clonedContainer = clonedDoc.getElementById('print-sheet-container');
             if (clonedContainer) {
               clonedContainer.style.display = 'block';
@@ -354,6 +351,48 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
         </div>
       </div>
 
+      {/* QR Code Section */}
+      <div>
+        <h2 className="text-xl font-bold flex items-center gap-2 mb-6 text-accent">
+          <QrCode className="w-5 h-5" /> Système QR Code
+        </h2>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between p-4 bg-muted/20 rounded-xl border">
+            <Label className="font-bold">Activer le QR Code</Label>
+            <Switch 
+              checked={config.showQRCode} 
+              onCheckedChange={(val) => updateFields({ showQRCode: val })} 
+            />
+          </div>
+
+          {config.showQRCode && (
+            <div className="p-4 bg-muted/30 rounded-xl border space-y-4">
+              <div className="space-y-2">
+                <Label className="text-xs uppercase font-bold text-muted-foreground">Contenu du QR Code</Label>
+                <Input 
+                  value={config.qrCodeContent}
+                  onChange={(e) => updateFields({ qrCodeContent: e.target.value })}
+                  placeholder="Ex: https://monsite.fr/[NUM]"
+                  className="bg-white"
+                />
+                <p className="text-[10px] text-muted-foreground">Utilisez <strong>[NUM]</strong> pour insérer le numéro du ticket.</p>
+              </div>
+              <div className="grid grid-cols-1 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-xs uppercase font-bold text-muted-foreground">Taille (px)</Label>
+                  <Input 
+                    type="number"
+                    value={config.qrCodeSize}
+                    onChange={(e) => updateFields({ qrCodeSize: Math.max(10, parseInt(e.target.value) || 10) })}
+                    className="bg-white font-bold"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Global Style Section */}
       <div>
         <h2 className="text-xl font-bold flex items-center gap-2 mb-6 text-accent">
@@ -412,9 +451,9 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
         <h2 className="text-xl font-bold flex items-center gap-2 mb-6 text-accent"><Sparkles className="w-5 h-5" /> Séries & Numéros</h2>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2"><Label>Quantité</Label><Input type="number" value={config.quantity} onChange={(e) => updateFields({ quantity: Math.max(1, parseInt(e.target.value) || 1) })} /></div>
+          <div className="space-y-2"><Label>Départ</Label><Input type="number" value={config.startingNumber} onChange={(e) => updateFields({ startingNumber: Math.max(0, parseInt(e.target.value) || 0) })} /></div>
           {config.showNumbering && (
             <>
-              <div className="space-y-2"><Label>Départ</Label><Input type="number" value={config.startingNumber} onChange={(e) => updateFields({ startingNumber: Math.max(0, parseInt(e.target.value) || 0) })} /></div>
               <div className="space-y-2"><Label>Préfixe</Label><Input value={config.numberPrefix} onChange={(e) => updateFields({ numberPrefix: e.target.value })} placeholder="Ex: A-" /></div>
               <div className="space-y-2"><Label>Suffixe</Label><Input value={config.numberSuffix} onChange={(e) => updateFields({ numberSuffix: e.target.value })} placeholder="Ex: -B" /></div>
             </>
