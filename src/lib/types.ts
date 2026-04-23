@@ -7,8 +7,16 @@ export interface NumberingInstance {
   y: number;
   size: number;
   rotation: number;
-  color?: string; // Optionnel : couleur individuelle
-  autoContrast?: boolean; // Optionnel : contraste auto individuel
+  color?: string;
+  autoContrast?: boolean;
+}
+
+export interface QRCodeInstance {
+  id: string;
+  content: string;
+  size: number;
+  x: number;
+  y: number;
 }
 
 export interface TicketConfig {
@@ -30,10 +38,8 @@ export interface TicketConfig {
   showNumbering: boolean;
   // QR Code Config
   showQRCode: boolean;
-  qrCodeContent: string;
-  qrCodeSize: number;
-  qrCodeX: number;
-  qrCodeY: number;
+  qrCodes: QRCodeInstance[];
+  activeQRCodeId: string;
 }
 
 export const DEFAULT_CONFIG: TicketConfig = {
@@ -57,8 +63,8 @@ export const DEFAULT_CONFIG: TicketConfig = {
   showNumbering: true,
   // Default QR Code Values
   showQRCode: false,
-  qrCodeContent: "TICKET-[NUM]",
-  qrCodeSize: 40,
-  qrCodeX: 15,
-  qrCodeY: 50,
+  qrCodes: [
+    { id: 'qr-1', content: "[NUM]", size: 40, x: 15, y: 50 }
+  ],
+  activeQRCodeId: 'qr-1',
 };

@@ -2,7 +2,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react';
-import { TicketConfig, TicketType, NumberingInstance, DEFAULT_CONFIG } from '@/lib/types';
+import { TicketConfig, TicketType, NumberingInstance, QRCodeInstance, DEFAULT_CONFIG } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -55,6 +55,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
     }
   };
 
+  // Numbering Logic
   const addNumbering = () => {
     const newId = `num-${Date.now()}`;
     const newNum: NumberingInstance = {
@@ -105,6 +106,40 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
     updateFields({ numberings: newNumberings });
   };
 
+  // QR Code Logic
+  const addQRCode = () => {
+    const newId = `qr-${Date.now()}`;
+    const newQR: QRCodeInstance = {
+      id: newId,
+      content: "[NUM]",
+      size: 40,
+      x: 50,
+      y: 50
+    };
+    const currentQRs = config.qrCodes || DEFAULT_CONFIG.qrCodes;
+    updateFields({ 
+      qrCodes: [...currentQRs, newQR],
+      activeQRCodeId: newId,
+      showQRCode: true
+    });
+  };
+
+  const removeQRCode = (id: string) => {
+    const currentQRs = config.qrCodes || DEFAULT_CONFIG.qrCodes;
+    if (currentQRs.length <= 1) return;
+    const newQRs = currentQRs.filter(q => q.id !== id);
+    const newActiveId = config.activeQRCodeId === id ? newQRs[0].id : config.activeQRCodeId;
+    updateFields({ qrCodes: newQRs, activeQRCodeId: newActiveId });
+  };
+
+  const updateActiveQRCode = (updates: Partial<QRCodeInstance>) => {
+    const currentQRs = config.qrCodes || DEFAULT_CONFIG.qrCodes;
+    const newQRs = currentQRs.map(q => 
+      q.id === config.activeQRCodeId ? { ...q, ...updates } : q
+    );
+    updateFields({ qrCodes: newQRs });
+  };
+
   const handleTypeChange = (type: TicketType) => {
     let width = config.ticketWidth;
     let height = config.ticketHeight;
@@ -125,7 +160,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
       setIsExporting(true);
       toast({
         title: "Génération du PDF",
-        description: "Préparation de votre fichier d3-ticket.pdf (cela peut prendre quelques instants)...",
+        description: "Préparation de votre fichier d3-ticket.pdf...",
       });
 
       const { jsPDF } = await import('jspdf');
@@ -153,14 +188,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
           useCORS: true,
           allowTaint: true,
           backgroundColor: '#ffffff',
-          logging: false,
-          onclone: (clonedDoc) => {
-            const clonedContainer = clonedDoc.getElementById('print-sheet-container');
-            if (clonedContainer) {
-              clonedContainer.style.display = 'block';
-              clonedContainer.style.visibility = 'visible';
-            }
-          }
+          logging: false
         });
         
         const imgData = canvas.toDataURL('image/jpeg', 0.95);
@@ -175,11 +203,11 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
         description: "Votre fichier d3-ticket.pdf a été téléchargé.",
       });
     } catch (error) {
-      console.error("Erreur d'exportation PDF:", error);
+      console.error("Erreur PDF:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Une erreur est survenue lors de la génération du PDF. Vérifiez votre connexion ou réduisez la quantité.",
+        description: "Une erreur est survenue lors de la génération du PDF.",
       });
     } finally {
       const container = document.getElementById('print-sheet-container');
@@ -193,7 +221,8 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
 
   const backgroundPresets = PlaceHolderImages.filter(img => img.id.startsWith('bg-'));
   const numberings = config.numberings || DEFAULT_CONFIG.numberings;
-  const activeNumbering = numberings.find(n => n.id === config.activeNumberingId) || numberings[0];
+  const qrCodes = config.qrCodes || DEFAULT_CONFIG.qrCodes;
+  const activeQR = qrCodes.find(q => q.id === config.activeQRCodeId) || qrCodes[0];
 
   return (
     <div className="space-y-8 bg-white p-6 rounded-2xl shadow-sm border border-border">
@@ -224,10 +253,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
               <Input 
                 type="number"
                 value={config.ticketWidth}
-                onChange={(e) => {
-                  const val = Math.max(1, parseInt(e.target.value) || 0);
-                  updateFields({ ticketWidth: val, ticketType: 'custom' });
-                }}
+                onChange={(e) => updateFields({ ticketWidth: Math.max(1, parseInt(e.target.value) || 0), ticketType: 'custom' })}
                 className="font-bold bg-white"
               />
             </div>
@@ -236,10 +262,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
               <Input 
                 type="number"
                 value={config.ticketHeight}
-                onChange={(e) => {
-                  const val = Math.max(1, parseInt(e.target.value) || 0);
-                  updateFields({ ticketHeight: val, ticketType: 'custom' });
-                }}
+                onChange={(e) => updateFields({ ticketHeight: Math.max(1, parseInt(e.target.value) || 0), ticketType: 'custom' })}
                 className="font-bold bg-white"
               />
             </div>
@@ -294,7 +317,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
                     <Label className="text-xs uppercase font-bold text-muted-foreground">Taille (pt)</Label>
                     <Input 
                       type="number"
-                      value={activeNumbering.size}
+                      value={numberings.find(n => n.id === config.activeNumberingId)?.size || 24}
                       onChange={(e) => updateActiveNumbering({ size: Math.max(1, parseInt(e.target.value) || 1) })}
                       className="bg-white font-bold"
                     />
@@ -303,7 +326,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
                     <Label className="text-xs uppercase font-bold text-muted-foreground">Rotation (°)</Label>
                     <Input 
                       type="number"
-                      value={activeNumbering.rotation}
+                      value={numberings.find(n => n.id === config.activeNumberingId)?.rotation || 0}
                       onChange={(e) => updateActiveNumbering({ rotation: parseInt(e.target.value) || 0 })}
                       className="bg-white font-bold"
                     />
@@ -312,12 +335,12 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
 
                 <div className="space-y-3 pt-3 border-t">
                   <div className="flex items-center justify-between">
-                    <Label className="text-xs uppercase font-bold text-muted-foreground">Style du Point N° {numberings.findIndex(n => n.id === config.activeNumberingId) + 1}</Label>
+                    <Label className="text-xs uppercase font-bold text-muted-foreground">Couleur Point N° {numberings.findIndex(n => n.id === config.activeNumberingId) + 1}</Label>
                     <Button 
-                      variant={(activeNumbering.autoContrast || (activeNumbering.autoContrast === undefined && config.autoContrast)) ? "default" : "outline"}
+                      variant={(numberings.find(n => n.id === config.activeNumberingId)?.autoContrast) ? "default" : "outline"}
                       size="sm"
                       className="h-7 text-[9px] gap-1 px-2 uppercase font-black"
-                      onClick={() => updateActiveNumbering({ autoContrast: !(activeNumbering.autoContrast || (activeNumbering.autoContrast === undefined && config.autoContrast)) })}
+                      onClick={() => updateActiveNumbering({ autoContrast: !numberings.find(n => n.id === config.activeNumberingId)?.autoContrast })}
                     >
                       <Wand2 className="w-3 h-3" /> Auto
                     </Button>
@@ -326,21 +349,10 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
                     <Input 
                       type="color" 
                       className="w-10 h-8 p-1 cursor-pointer" 
-                      value={activeNumbering.color || config.color} 
+                      value={numberings.find(n => n.id === config.activeNumberingId)?.color || config.color} 
                       onChange={(e) => updateActiveNumbering({ color: e.target.value, autoContrast: false })} 
                     />
-                    <Input 
-                      value={activeNumbering.color || config.color} 
-                      onChange={(e) => updateActiveNumbering({ color: e.target.value, autoContrast: false })} 
-                      className="h-8 font-mono text-xs" 
-                    />
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={applyActiveToAll}
-                      className="h-8 text-[9px] font-bold gap-1"
-                      title="Appliquer ce style à tous les numéros"
-                    >
+                    <Button variant="outline" size="sm" onClick={applyActiveToAll} className="h-8 text-[9px] font-bold gap-1 ml-auto">
                       <CheckCheck className="w-3 h-3" /> Tous
                     </Button>
                   </div>
@@ -351,14 +363,16 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
         </div>
       </div>
 
-      {/* QR Code Section */}
+      {/* QR Code Management Section */}
       <div>
-        <h2 className="text-xl font-bold flex items-center gap-2 mb-6 text-accent">
-          <QrCode className="w-5 h-5" /> Système QR Code
+        <h2 className="text-xl font-bold flex items-center justify-between mb-6 text-accent">
+          <div className="flex items-center gap-2"><QrCode className="w-5 h-5" /> Points QR Code</div>
+          <Button size="sm" onClick={addQRCode} className="h-8 gap-1"><Plus className="w-4 h-4" /> Ajouter</Button>
         </h2>
+        
         <div className="space-y-4">
           <div className="flex items-center justify-between p-4 bg-muted/20 rounded-xl border">
-            <Label className="font-bold">Activer le QR Code</Label>
+            <Label className="font-bold">Activer les QR Codes</Label>
             <Switch 
               checked={config.showQRCode} 
               onCheckedChange={(val) => updateFields({ showQRCode: val })} 
@@ -366,60 +380,57 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
           </div>
 
           {config.showQRCode && (
-            <div className="p-4 bg-muted/30 rounded-xl border space-y-4">
-              <div className="space-y-2">
-                <Label className="text-xs uppercase font-bold text-muted-foreground">Contenu du QR Code</Label>
-                <Input 
-                  value={config.qrCodeContent}
-                  onChange={(e) => updateFields({ qrCodeContent: e.target.value })}
-                  placeholder="Ex: https://monsite.fr/[NUM]"
-                  className="bg-white"
-                />
-                <p className="text-[10px] text-muted-foreground">Utilisez <strong>[NUM]</strong> pour insérer le numéro du ticket.</p>
+            <>
+              <div className="flex flex-wrap gap-2">
+                {qrCodes.map((qr, idx) => (
+                  <div key={qr.id} className="relative group">
+                    <Button
+                      variant={config.activeQRCodeId === qr.id ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => updateFields({ activeQRCodeId: qr.id })}
+                      className="h-9 px-4 font-bold"
+                    >
+                      QR {idx + 1}
+                    </Button>
+                    {qrCodes.length > 1 && (
+                      <button 
+                        onClick={() => removeQRCode(qr.id)}
+                        className="absolute -top-2 -right-2 bg-white border border-red-200 text-red-500 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+                ))}
               </div>
-              <div className="grid grid-cols-1 gap-4">
+
+              <div className="p-4 bg-muted/30 rounded-xl border space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-xs uppercase font-bold text-muted-foreground">Contenu du QR Code {qrCodes.findIndex(q => q.id === config.activeQRCodeId) + 1}</Label>
+                  <Input 
+                    value={activeQR.content}
+                    onChange={(e) => updateActiveQRCode({ content: e.target.value })}
+                    placeholder="Ex: [NUM] ou https://site.fr/[NUM]"
+                    className="bg-white font-medium"
+                  />
+                  <p className="text-[10px] text-muted-foreground">Utilisez <strong>[NUM]</strong> pour insérer le code du ticket.</p>
+                </div>
                 <div className="space-y-2">
                   <Label className="text-xs uppercase font-bold text-muted-foreground">Taille (px)</Label>
                   <Input 
                     type="number"
-                    value={config.qrCodeSize}
-                    onChange={(e) => updateFields({ qrCodeSize: Math.max(10, parseInt(e.target.value) || 10) })}
+                    value={activeQR.size}
+                    onChange={(e) => updateActiveQRCode({ size: Math.max(10, parseInt(e.target.value) || 10) })}
                     className="bg-white font-bold"
                   />
                 </div>
               </div>
-            </div>
+            </>
           )}
         </div>
       </div>
 
-      {/* Global Style Section */}
-      <div>
-        <h2 className="text-xl font-bold flex items-center gap-2 mb-6 text-accent">
-          <Palette className="w-5 h-5" /> Style Global
-        </h2>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label>Couleur par défaut / globale</Label>
-              <Button 
-                variant={config.autoContrast ? "default" : "outline"}
-                size="sm"
-                className="h-7 text-[10px] gap-1 px-2 uppercase font-black"
-                onClick={() => updateFields({ autoContrast: !config.autoContrast })}
-              >
-                <Wand2 className="w-3 h-3" /> Global Auto
-              </Button>
-            </div>
-            <div className="flex gap-2">
-               <Input type="color" className="w-12 h-10 p-1 cursor-pointer" value={config.color} onChange={(e) => updateFields({ color: e.target.value, autoContrast: false })} />
-               <Input value={config.color} onChange={(e) => updateFields({ color: e.target.value, autoContrast: false })} placeholder="#000000" className="font-mono" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Images Section */}
+      {/* Design Section */}
       <div className="space-y-6">
         <div>
           <h2 className="text-xl font-bold flex items-center gap-2 mb-4 text-accent"><ImageIcon className="w-5 h-5" /> Design (Recto)</h2>
@@ -446,18 +457,12 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
         </div>
       </div>
 
-      {/* Generation Section */}
+      {/* Series Section */}
       <div>
         <h2 className="text-xl font-bold flex items-center gap-2 mb-6 text-accent"><Sparkles className="w-5 h-5" /> Séries & Numéros</h2>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2"><Label>Quantité</Label><Input type="number" value={config.quantity} onChange={(e) => updateFields({ quantity: Math.max(1, parseInt(e.target.value) || 1) })} /></div>
           <div className="space-y-2"><Label>Départ</Label><Input type="number" value={config.startingNumber} onChange={(e) => updateFields({ startingNumber: Math.max(0, parseInt(e.target.value) || 0) })} /></div>
-          {config.showNumbering && (
-            <>
-              <div className="space-y-2"><Label>Préfixe</Label><Input value={config.numberPrefix} onChange={(e) => updateFields({ numberPrefix: e.target.value })} placeholder="Ex: A-" /></div>
-              <div className="space-y-2"><Label>Suffixe</Label><Input value={config.numberSuffix} onChange={(e) => updateFields({ numberSuffix: e.target.value })} placeholder="Ex: -B" /></div>
-            </>
-          )}
         </div>
       </div>
 
@@ -465,23 +470,9 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
         <Button onClick={onPrint} className="w-full bg-primary hover:bg-primary/90 text-white h-14 text-xl shadow-xl transition-transform hover:scale-[1.01]">
           <Printer className="w-6 h-6 mr-3" /> Imprimer les Tickets
         </Button>
-        <Button 
-          onClick={handleExportPDF} 
-          disabled={isExporting}
-          variant="outline" 
-          className="w-full h-12 text-accent font-bold gap-2 border-accent/20 hover:bg-accent/5"
-        >
-          {isExporting ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin" />
-              Génération du fichier...
-            </>
-          ) : (
-            <>
-              <FileDown className="w-5 h-5" />
-              Télécharger le fichier PDF
-            </>
-          )}
+        <Button onClick={handleExportPDF} disabled={isExporting} variant="outline" className="w-full h-12 text-accent font-bold gap-2 border-accent/20 hover:bg-accent/5">
+          {isExporting ? <Loader2 className="w-5 h-5 animate-spin" /> : <FileDown className="w-5 h-5" />}
+          Télécharger d3-ticket.pdf
         </Button>
       </div>
     </div>

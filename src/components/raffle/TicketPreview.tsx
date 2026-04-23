@@ -2,7 +2,7 @@
 "use client"
 
 import React, { useMemo, useRef, useState, useEffect, useCallback } from 'react';
-import { TicketConfig, NumberingInstance, DEFAULT_CONFIG } from '@/lib/types';
+import { TicketConfig, NumberingInstance, QRCodeInstance, DEFAULT_CONFIG } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { QRCodeCanvas } from 'qrcode.react';
 
@@ -16,21 +16,15 @@ interface TicketPreviewProps {
 
 export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, isPrintView = false, isVerso = false, onConfigChange }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [dragTarget, setDragTarget] = useState<'number' | 'qrcode' | null>(null);
+  const [dragTarget, setDragTarget] = useState<{ type: 'number' | 'qrcode', id: string } | null>(null);
 
   const numberings = config.numberings || DEFAULT_CONFIG.numberings;
+  const qrCodes = config.qrCodes || DEFAULT_CONFIG.qrCodes;
 
   const displayValue = useMemo(() => {
     if (number === "") return "";
-    const formattedNum = String(number).padStart(5, '0');
-    return `${config.numberPrefix || ''}${formattedNum}${config.numberSuffix || ''}`;
-  }, [number, config.numberPrefix, config.numberSuffix]);
-
-  const qrValue = useMemo(() => {
-    if (number === "") return config.qrCodeContent || "";
-    const formattedNum = String(number).padStart(5, '0');
-    return (config.qrCodeContent || "").replace("[NUM]", formattedNum);
-  }, [number, config.qrCodeContent]);
+    return String(number).padStart(5, '0');
+  }, [number]);
 
   const imageUrl = isVerso ? config.versoBackgroundImage : config.backgroundImage;
 
@@ -52,68 +46,6 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
     return displayWidthPx / naturalWidthPx;
   }, [config.ticketWidth, isPrintView]);
 
-  const detectBestColorForPoint = useCallback((num: NumberingInstance, img: HTMLImageElement) => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return null;
-
-    canvas.width = 100;
-    canvas.height = 100;
-    ctx.drawImage(img, 0, 0, 100, 100);
-
-    const x = Math.floor(num.x);
-    const y = Math.floor(num.y);
-    const sampleSize = 5;
-    const data = ctx.getImageData(
-      Math.max(0, x - sampleSize), 
-      Math.max(0, y - sampleSize), 
-      sampleSize * 2, 
-      sampleSize * 2
-    ).data;
-
-    let totalLuminance = 0;
-    for (let i = 0; i < data.length; i += 4) {
-      const r = data[i];
-      const g = data[i + 1];
-      const b = data[i + 2];
-      totalLuminance += (0.299 * r + 0.587 * g + 0.114 * b);
-    }
-
-    const avgLuminance = totalLuminance / (data.length / 4);
-    return avgLuminance > 128 ? "#000000" : "#FFFFFF";
-  }, []);
-
-  useEffect(() => {
-    if (!isValidUrl || !imageUrl || isVerso || !onConfigChange) return;
-
-    const needsAutoContrast = numberings.some(n => n.autoContrast || (n.autoContrast === undefined && config.autoContrast));
-    if (!needsAutoContrast) return;
-
-    const img = new window.Image();
-    img.crossOrigin = "anonymous";
-    img.src = imageUrl;
-
-    img.onload = () => {
-      let hasChanged = false;
-      const newNumberings = numberings.map(n => {
-        const shouldAuto = n.autoContrast || (n.autoContrast === undefined && config.autoContrast);
-        if (shouldAuto) {
-          const bestColor = detectBestColorForPoint(n, img);
-          const currentColor = n.color || config.color;
-          if (bestColor && bestColor !== currentColor) {
-            hasChanged = true;
-            return { ...n, color: bestColor, autoContrast: true };
-          }
-        }
-        return n;
-      });
-
-      if (hasChanged) {
-        onConfigChange({ ...config, numberings: newNumberings });
-      }
-    };
-  }, [imageUrl, isValidUrl, isVerso, config, onConfigChange, numberings, detectBestColorForPoint]);
-
   const updatePosition = useCallback((clientX: number, clientY: number) => {
     if (!containerRef.current || !onConfigChange || isVerso || !dragTarget) return;
 
@@ -121,25 +53,26 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
     const x = ((clientX - rect.left) / rect.width) * 100;
     const y = ((clientY - rect.top) / rect.height) * 100;
 
-    if (dragTarget === 'number' && config.showNumbering) {
+    if (dragTarget.type === 'number') {
       const newNumberings = numberings.map(n => 
-        n.id === config.activeNumberingId 
+        n.id === dragTarget.id 
           ? { ...n, x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) }
           : n
       );
       onConfigChange({ ...config, numberings: newNumberings });
-    } else if (dragTarget === 'qrcode' && config.showQRCode) {
-      onConfigChange({ 
-        ...config, 
-        qrCodeX: Math.max(0, Math.min(100, x)), 
-        qrCodeY: Math.max(0, Math.min(100, y)) 
-      });
+    } else if (dragTarget.type === 'qrcode') {
+      const newQRs = qrCodes.map(q => 
+        q.id === dragTarget.id 
+          ? { ...q, x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) }
+          : q
+      );
+      onConfigChange({ ...config, qrCodes: newQRs });
     }
-  }, [config, onConfigChange, isVerso, dragTarget, numberings]);
+  }, [config, onConfigChange, isVerso, dragTarget, numberings, qrCodes]);
 
-  const handleMouseDown = (e: React.MouseEvent, target: 'number' | 'qrcode') => {
+  const handleMouseDown = (e: React.MouseEvent, type: 'number' | 'qrcode', id: string) => {
     if (isPrintView || !onConfigChange || isVerso) return;
-    setDragTarget(target);
+    setDragTarget({ type, id });
     updatePosition(e.clientX, e.clientY);
   };
 
@@ -184,9 +117,6 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
         dragTarget && "scale-[1.01] transition-transform z-50 ring-4 ring-primary/30"
       )}
       style={previewStyles}
-      onMouseDown={(e) => {
-        if (!dragTarget) handleMouseDown(e, 'number');
-      }}
     >
       {isValidUrl && imageUrl ? (
         <img 
@@ -199,7 +129,6 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
       ) : (
         <div className="absolute inset-0 bg-muted/20 flex flex-col items-center justify-center text-muted-foreground font-bold text-sm h-full p-4 text-center">
           <p>{isVerso ? "Design du Verso" : "Design du Recto"}</p>
-          <p className="text-[10px] font-normal mt-2 opacity-60">{config.ticketWidth}mm x {config.ticketHeight}mm</p>
         </div>
       )}
 
@@ -214,13 +143,12 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
               e.stopPropagation();
               if (isPrintView || !onConfigChange) return;
               onConfigChange({ ...config, activeNumberingId: num.id });
-              handleMouseDown(e, 'number');
+              handleMouseDown(e, 'number', num.id);
             }}
             className={cn(
               "absolute font-bold whitespace-nowrap select-none z-20 origin-center transition-opacity",
               !isPrintView && "cursor-pointer pointer-events-auto",
-              dragTarget === 'number' && num.id === config.activeNumberingId ? "opacity-80" : "opacity-100",
-              !isPrintView && num.id === config.activeNumberingId && "ring-2 ring-primary ring-offset-2 rounded-sm"
+              !isPrintView && config.activeNumberingId === num.id && "ring-2 ring-primary ring-offset-2 rounded-sm"
             )}
             style={{ 
               left: `${num.x}%`, 
@@ -238,34 +166,40 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
         );
       })}
 
-      {!isVerso && config.showQRCode && (
-        <div 
-          onMouseDown={(e) => {
-            e.stopPropagation();
-            handleMouseDown(e, 'qrcode');
-          }}
-          className={cn(
-            "absolute z-30 transition-opacity",
-            !isPrintView && "cursor-move pointer-events-auto",
-            dragTarget === 'qrcode' ? "opacity-70" : "opacity-100",
-            !isPrintView && "hover:ring-2 hover:ring-primary hover:ring-offset-2"
-          )}
-          style={{
-            left: `${config.qrCodeX}%`,
-            top: `${config.qrCodeY}%`,
-            transform: `translate(-50%, -50%)`,
-            width: `${(config.qrCodeSize || 40) * fontScaleFactor}px`,
-            height: `${(config.qrCodeSize || 40) * fontScaleFactor}px`,
-          }}
-        >
-          <QRCodeCanvas 
-            value={qrValue} 
-            size={(config.qrCodeSize || 40) * (isPrintView ? 4 : 1)} // Higher resolution for printing
-            style={{ width: '100%', height: '100%' }}
-            level="H"
-          />
-        </div>
-      )}
+      {!isVerso && config.showQRCode && qrCodes.map((qr) => {
+        const qrContent = qr.content.replace("[NUM]", displayValue);
+        
+        return (
+          <div 
+            key={qr.id}
+            onMouseDown={(e) => {
+              e.stopPropagation();
+              if (isPrintView || !onConfigChange) return;
+              onConfigChange({ ...config, activeQRCodeId: qr.id });
+              handleMouseDown(e, 'qrcode', qr.id);
+            }}
+            className={cn(
+              "absolute z-30 transition-opacity",
+              !isPrintView && "cursor-move pointer-events-auto",
+              !isPrintView && config.activeQRCodeId === qr.id && "ring-2 ring-primary ring-offset-2 rounded-sm"
+            )}
+            style={{
+              left: `${qr.x}%`,
+              top: `${qr.y}%`,
+              transform: `translate(-50%, -50%)`,
+              width: `${(qr.size || 40) * fontScaleFactor}px`,
+              height: `${(qr.size || 40) * fontScaleFactor}px`,
+            }}
+          >
+            <QRCodeCanvas 
+              value={qrContent || " "} 
+              size={(qr.size || 40) * (isPrintView ? 4 : 1)}
+              style={{ width: '100%', height: '100%' }}
+              level="H"
+            />
+          </div>
+        );
+      })}
     </div>
   );
 };

@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -12,7 +13,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
-const STORAGE_KEY = 'd3_tombola_config';
+const STORAGE_KEY = 'd3_tombola_config_v2';
 
 export default function Home() {
   const [config, setConfig] = useState<TicketConfig>(DEFAULT_CONFIG);
@@ -33,15 +34,23 @@ export default function Home() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
+        // Migration for multiple QR codes if necessary
+        const qrCodes = Array.isArray(parsed.qrCodes) && parsed.qrCodes.length > 0
+          ? parsed.qrCodes
+          : (parsed.qrCodeContent 
+              ? [{ id: 'qr-migrated', content: parsed.qrCodeContent, size: parsed.qrCodeSize || 40, x: parsed.qrCodeX || 15, y: parsed.qrCodeY || 50 }]
+              : DEFAULT_CONFIG.qrCodes);
+
         setConfig({
           ...DEFAULT_CONFIG,
           ...parsed,
           numberings: Array.isArray(parsed.numberings) && parsed.numberings.length > 0 
             ? parsed.numberings 
-            : (parsed.numberings ? [parsed.numberings] : DEFAULT_CONFIG.numberings),
+            : DEFAULT_CONFIG.numberings,
+          qrCodes: qrCodes,
+          activeQRCodeId: parsed.activeQRCodeId || (qrCodes[0]?.id || DEFAULT_CONFIG.activeQRCodeId),
           ticketWidth: Number(parsed.ticketWidth) || DEFAULT_CONFIG.ticketWidth,
           ticketHeight: Number(parsed.ticketHeight) || DEFAULT_CONFIG.ticketHeight,
-          showNumbering: typeof parsed.showNumbering === 'boolean' ? parsed.showNumbering : DEFAULT_CONFIG.showNumbering
         });
       } catch (e) {
         console.error("Erreur de chargement de la config locale", e);
@@ -189,7 +198,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* Header section (Non-printable) */}
+      {/* Header section */}
       <header className="no-print bg-white border-b py-6 px-4 mb-8 shadow-sm">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-3">
@@ -204,9 +213,7 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Main Content Area (Non-printable) */}
       <div className="no-print max-w-6xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-10">
-        {/* Left Column: Form Controls */}
         <div className="lg:col-span-5 order-2 lg:order-1">
           <TicketForm 
             config={config} 
@@ -215,7 +222,6 @@ export default function Home() {
           />
         </div>
 
-        {/* Right Column: Dynamic Preview */}
         <div className="lg:col-span-7 order-1 lg:order-2 space-y-6">
           <div className="sticky top-10">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-4">
@@ -249,10 +255,10 @@ export default function Home() {
                 <span className="text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 px-2 py-1 rounded-md">
                   Mode: {activeFace === 'recto' ? 'Recto' : 'Verso'}
                 </span>
-                {activeFace === 'recto' && config.showNumbering && (
+                {activeFace === 'recto' && (config.showNumbering || config.showQRCode) && (
                   <div className="flex items-center gap-2 text-[10px] bg-accent/10 text-accent px-2 py-1 rounded-md font-bold">
                     <MousePointer2 className="w-3 h-3" />
-                    Glissez le numéro
+                    Glissez les éléments
                   </div>
                 )}
               </div>
@@ -276,10 +282,8 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Printable Sheet (Hidden on screen) */}
       <PrintSheet config={config} />
 
-      {/* Footer (Non-printable) */}
       <footer className="no-print mt-20 pt-10 border-t text-center text-muted-foreground px-4">
         <div className="max-w-6xl mx-auto">
           <p className="text-sm font-medium">© 2024 D3 TICKET — Vos données sont stockées localement sur cet ordinateur.</p>
