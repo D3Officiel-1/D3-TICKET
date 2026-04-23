@@ -45,11 +45,16 @@ export const TicketPreview: React.FC<TicketPreviewProps> = ({ config, number, is
     }
   }, [imageUrl]);
 
+  // Facteur de conversion mm -> px (basé sur 96 DPI standard pour l'impression navigateur)
+  const MM_TO_PX = 3.7795275591;
+
   const fontScaleFactor = useMemo(() => {
-    if (isPrintView) return 1;
     const wMm = config.ticketWidth || 140;
-    const naturalWidthPx = wMm * 3.7795275591;
-    const displayWidthPx = 550;
+    const naturalWidthPx = wMm * MM_TO_PX;
+    
+    if (isPrintView) return 1; // En impression, on garde les unités naturelles
+
+    const displayWidthPx = 550; // Largeur de la prévisualisation fixe
     return displayWidthPx / naturalWidthPx;
   }, [config.ticketWidth, isPrintView]);
 
@@ -243,13 +248,15 @@ const QRCodeItem = ({ qr, displayValue, config, fontScaleFactor, isPrintView, on
   useEffect(() => {
     const qrContent = qr.content
       .replace("[NUM]", displayValue)
-      .replace("[TYPE]", config.ticketStatus); // Utilise ticketStatus pour le type
+      .replace("[TYPE]", config.ticketStatus);
 
-    const size = (qr.size || 40) * (isPrintView ? 4 : 1) * fontScaleFactor;
+    // Taille de rendu augmentée en impression pour la netteté
+    const baseSize = (qr.size || 40);
+    const renderSize = baseSize * (isPrintView ? 4 : 1) * fontScaleFactor;
 
     const qrOptions: any = {
-      width: size,
-      height: size,
+      width: renderSize,
+      height: renderSize,
       data: qrContent || " ",
       margin: (qr.margin || 0),
       qrOptions: {
@@ -344,7 +351,7 @@ const QRCodeItem = ({ qr, displayValue, config, fontScaleFactor, isPrintView, on
       <div 
         ref={qrRef} 
         style={{ width: '100%', height: '100%' }}
-        className="[&_svg]:w-full [&_svg]:h-full"
+        className="[&_svg]:w-full [&_svg]:h-full [&_canvas]:w-full [&_canvas]:h-full"
       />
     </div>
   );
