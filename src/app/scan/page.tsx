@@ -75,15 +75,11 @@ export default function ScanPage() {
     setLoading(true);
     let code = decodedText;
 
-    // Tentative d'extraction du code si c'est une URL
+    // Extraction du code si c'est une URL
     try {
         const url = new URL(decodedText);
         const params = new URLSearchParams(url.search);
         code = params.get('code') || decodedText;
-        if (!params.get('code') && url.pathname.length > 1) {
-            const parts = url.pathname.split('/');
-            code = parts[parts.length - 1] || code;
-        }
     } catch (e) {}
 
     try {
@@ -103,7 +99,7 @@ export default function ScanPage() {
   };
 
   const onScanFailure = () => {
-    // Ignorer les erreurs de détection (fréquentes tant qu'un QR n'est pas trouvé)
+    // Silencieux pendant la détection
   };
 
   return (
@@ -125,7 +121,7 @@ export default function ScanPage() {
           <CardTitle className="text-2xl font-black uppercase tracking-tight text-accent">
             Validation Ticket
           </CardTitle>
-          <p className="text-sm text-muted-foreground font-medium">Scannez le QR Code pour valider l'entrée ou l'impression.</p>
+          <p className="text-sm text-muted-foreground font-medium">Scannez le QR Code pour valider l'entrée.</p>
         </CardHeader>
 
         <CardContent className="space-y-6">
@@ -151,9 +147,9 @@ export default function ScanPage() {
           {hasCameraPermission === false && (
             <Alert variant="destructive" className="rounded-2xl">
               <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Accès refusé</AlertTitle>
+              <AlertTitle>Caméra requise</AlertTitle>
               <AlertDescription>
-                Veuillez autoriser l'accès à la caméra pour scanner les tickets.
+                Veuillez autoriser l'accès à la caméra dans les paramètres de votre navigateur pour scanner les tickets.
               </AlertDescription>
             </Alert>
           )}
@@ -179,14 +175,14 @@ export default function ScanPage() {
                 className="w-full mt-4 h-10 font-bold gap-2 bg-white"
                 onClick={() => setLastResult(null)}
               >
-                <RefreshCw className="w-4 h-4" /> Scanner le suivant
+                <RefreshCw className="w-4 h-4" /> Suivant
               </Button>
             </div>
           )}
 
           {scanning && (
             <Button variant="secondary" onClick={stopScanner} className="w-full h-12 rounded-xl font-bold">
-              Désactiver le scanner
+              Arrêter le scanner
             </Button>
           )}
         </CardContent>

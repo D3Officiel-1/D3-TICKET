@@ -27,14 +27,15 @@ export async function fetchTicketsAction(quantity: number, ticketStatus: string)
     
     if (querySnapshot.empty) {
         // Fallback: si aucun ticket avec imprimer=false n'est trouvé, on vérifie ceux qui n'ont pas le champ du tout
+        // Firestore ne permet pas 'where field == null', on filtre donc manuellement le lot
         const qNoField = query(
             collection(db, "tickets"),
             where("type", "==", ticketStatus),
-            limit(Math.min(quantity, 500))
+            limit(Math.min(quantity * 2, 500)) // On prend plus large pour filtrer
         );
         const fullSnapshot = await getDocs(qNoField);
         
-        // On filtre manuellement les tickets qui n'ont pas encore le champ 'imprimer'
+        // On filtre manuellement les tickets qui n'ont pas encore le champ 'imprimer' ou dont il est faux
         const filteredDocs = fullSnapshot.docs.filter(doc => doc.data().imprimer !== true);
         
         const codes = filteredDocs.map(doc => {

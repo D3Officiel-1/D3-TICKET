@@ -14,6 +14,7 @@ export async function validateTicketScanAction(code: string) {
     const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
     const db = getFirestore(app);
 
+    // On cherche le ticket par son code unique
     const q = query(collection(db, "tickets"), where("code", "==", code), limit(1));
     const querySnapshot = await getDocs(q);
 
@@ -24,16 +25,17 @@ export async function validateTicketScanAction(code: string) {
     const ticketDoc = querySnapshot.docs[0];
     const data = ticketDoc.data();
 
+    // Si déjà marqué comme imprimé/validé
     if (data.imprimer === true) {
       return { 
         success: true, 
         alreadyValidated: true, 
         ticket: data,
-        message: "Ce ticket est déjà marqué comme imprimé/validé." 
+        message: "Ce ticket est déjà marqué comme validé/utilisé." 
       };
     }
 
-    // Mise à jour du statut
+    // Mise à jour du statut dans Firestore
     await updateDoc(ticketDoc.ref, {
       imprimer: true,
       validatedAt: new Date().toISOString()

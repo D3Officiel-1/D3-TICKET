@@ -21,7 +21,7 @@
         },
         "imprimer": {
           "type": "boolean",
-          "description": "Désigne si le ticket a déjà été imprimé."
+          "description": "Désigne si le ticket a déjà été imprimé/validé."
         },
         "createdAt": {
           "type": "string",
