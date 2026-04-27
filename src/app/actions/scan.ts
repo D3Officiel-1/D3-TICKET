@@ -19,7 +19,7 @@ export async function validateTicketScanAction(code: string) {
     const querySnapshot = await getDocs(q);
 
     if (querySnapshot.empty) {
-      return { success: false, message: "Ticket introuvable dans la base." };
+      return { success: false, message: "Ticket invalide : code inconnu dans la base." };
     }
 
     const ticketDoc = querySnapshot.docs[0];
@@ -31,11 +31,11 @@ export async function validateTicketScanAction(code: string) {
         success: true, 
         alreadyValidated: true, 
         ticket: data,
-        message: "Ce ticket est déjà marqué comme validé/utilisé." 
+        message: "Attention : Ce ticket a déjà été validé ou imprimé." 
       };
     }
 
-    // Mise à jour du statut dans Firestore
+    // Mise à jour du statut dans Firestore : scanné = validé = imprimer=true
     await updateDoc(ticketDoc.ref, {
       imprimer: true,
       validatedAt: new Date().toISOString()

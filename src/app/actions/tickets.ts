@@ -15,7 +15,7 @@ export async function fetchTicketsAction(quantity: number, ticketStatus: string)
     const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
     const db = getFirestore(app);
 
-    // Récupération des tickets non encore imprimés (imprimer == false)
+    // Récupération stricte des tickets non encore imprimés (imprimer == false)
     const q = query(
       collection(db, "tickets"),
       where("type", "==", ticketStatus),
@@ -25,18 +25,17 @@ export async function fetchTicketsAction(quantity: number, ticketStatus: string)
 
     const querySnapshot = await getDocs(q);
     
+    // Si vide, on tente de récupérer ceux qui n'ont pas encore le champ 'imprimer'
     if (querySnapshot.empty) {
-        // Fallback: si aucun ticket avec imprimer=false n'est trouvé, on vérifie ceux qui n'ont pas le champ du tout
-        // Firestore ne permet pas 'where field == null', on filtre donc manuellement le lot
         const qNoField = query(
             collection(db, "tickets"),
             where("type", "==", ticketStatus),
-            limit(Math.min(quantity * 2, 500)) // On prend plus large pour filtrer
+            limit(Math.min(quantity * 2, 500))
         );
         const fullSnapshot = await getDocs(qNoField);
         
-        // On filtre manuellement les tickets qui n'ont pas encore le champ 'imprimer' ou dont il est faux
-        const filteredDocs = fullSnapshot.docs.filter(doc => doc.data().imprimer !== true);
+        // Filtre manuel pour les documents n'ayant pas le champ 'imprimer'
+        const filteredDocs = fullSnapshot.docs.filter(doc => doc.data().imprimer === undefined || doc.data().imprimer === false);
         
         const codes = filteredDocs.map(doc => {
           const data = doc.data();
@@ -44,7 +43,7 @@ export async function fetchTicketsAction(quantity: number, ticketStatus: string)
         }).slice(0, quantity);
 
         if (codes.length === 0) {
-            throw new Error(`Aucun ticket disponible de type "${ticketStatus.toUpperCase()}".`);
+            throw new Error(`Aucun ticket disponible de type "${ticketStatus.toUpperCase()}". Tous les tickets sont déjà imprimés ou validés.`);
         }
         return codes;
     }
@@ -72,7 +71,10 @@ export async function markTicketsAsPrintedAction(codes: string[]) {
         const q = query(collection(db, "tickets"), where("code", "==", code), limit(1));
         const snap = await getDocs(q);
         if (!snap.empty) {
-            batch.update(snap.docs[0].ref, { imprimer: true });
+            batch.update(snap.docs[0].ref, { 
+                imprimer: true,
+                printedAt: new Date().toISOString()
+            });
         }
     }
     

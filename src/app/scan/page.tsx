@@ -7,7 +7,7 @@ import { validateTicketScanAction } from '@/app/actions/scan';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Loader2, Camera, CheckCircle2, AlertCircle, RefreshCw, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { Loader2, Camera, CheckCircle2, AlertCircle, RefreshCw, ArrowLeft, ShieldCheck, Ticket } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -21,7 +21,6 @@ export default function ScanPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Nettoyage au démontage
     return () => {
       if (scannerRef.current && scanning) {
         scannerRef.current.stop().catch(console.error);
@@ -39,7 +38,7 @@ export default function ScanPage() {
         
         await scanner.start(
           { facingMode: "environment" },
-          { fps: 10, qrbox: { width: 250, height: 250 } },
+          { fps: 15, qrbox: { width: 250, height: 250 } },
           onScanSuccess,
           onScanFailure
         );
@@ -49,7 +48,7 @@ export default function ScanPage() {
         toast({
           variant: "destructive",
           title: "Caméra introuvable",
-          description: "Aucun appareil de capture vidéo n'a été détecté."
+          description: "Veuillez vérifier vos branchements."
         });
       }
     } catch (err) {
@@ -64,7 +63,7 @@ export default function ScanPage() {
         await scannerRef.current.stop();
         setScanning(false);
       } catch (err) {
-        console.error("Erreur lors de l'arrêt du scanner:", err);
+        console.error("Erreur lors de l'arrêt:", err);
       }
     }
   };
@@ -75,7 +74,7 @@ export default function ScanPage() {
     setLoading(true);
     let code = decodedText;
 
-    // Extraction du code si c'est une URL
+    // Nettoyage du code (extraction si URL)
     try {
         const url = new URL(decodedText);
         const params = new URLSearchParams(url.search);
@@ -87,109 +86,131 @@ export default function ScanPage() {
       setLastResult(result);
       
       if (result.success) {
-        toast({ title: result.alreadyValidated ? "Déjà validé" : "Succès", description: result.message });
+        if (result.alreadyValidated) {
+            toast({ title: "Déjà utilisé", description: result.message, variant: "destructive" });
+        } else {
+            toast({ title: "Validé !", description: result.message });
+        }
       } else {
-        toast({ variant: "destructive", title: "Erreur", description: result.message });
+        toast({ variant: "destructive", title: "Invalide", description: result.message });
       }
     } catch (error) {
-      toast({ variant: "destructive", title: "Erreur serveur", description: "Impossible de valider le ticket." });
+      toast({ variant: "destructive", title: "Erreur", description: "Problème de connexion Firestore." });
     } finally {
       setLoading(false);
     }
   };
 
-  const onScanFailure = () => {
-    // Silencieux pendant la détection
-  };
+  const onScanFailure = () => {};
 
   return (
     <main className="min-h-screen bg-background p-4 flex flex-col items-center">
       <header className="w-full max-w-md flex items-center justify-between mb-8">
         <Link href="/">
-          <Button variant="ghost" size="sm" className="gap-2">
-            <ArrowLeft className="w-4 h-4" /> Retour
+          <Button variant="ghost" size="sm" className="gap-2 font-bold">
+            <ArrowLeft className="w-4 h-4" /> Accueil
           </Button>
         </Link>
         <div className="flex items-center gap-2">
           <ShieldCheck className="w-5 h-5 text-primary" />
-          <h1 className="text-xl font-black text-accent uppercase tracking-tighter">D3 SCANNER</h1>
+          <h1 className="text-xl font-black text-accent uppercase tracking-tighter">SCANNER D3</h1>
         </div>
       </header>
 
-      <Card className="w-full max-w-md border-2 border-primary/20 shadow-2xl rounded-[2rem] overflow-hidden">
-        <CardHeader className="text-center pb-2">
-          <CardTitle className="text-2xl font-black uppercase tracking-tight text-accent">
-            Validation Ticket
+      <Card className="w-full max-w-md border-2 border-primary/20 shadow-2xl rounded-[2.5rem] overflow-hidden">
+        <CardHeader className="text-center pb-2 bg-accent/5 border-b">
+          <CardTitle className="text-2xl font-black uppercase tracking-tight text-accent flex items-center justify-center gap-2">
+            <Ticket className="w-6 h-6" /> Validation
           </CardTitle>
-          <p className="text-sm text-muted-foreground font-medium">Scannez le QR Code pour valider l'entrée.</p>
+          <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">Contrôle d'accès en direct</p>
         </CardHeader>
 
-        <CardContent className="space-y-6">
-          <div className="relative aspect-square bg-black rounded-3xl overflow-hidden shadow-inner border-4 border-muted/20">
+        <CardContent className="p-6 space-y-6">
+          <div className="relative aspect-square bg-slate-900 rounded-[2rem] overflow-hidden shadow-2xl border-4 border-white">
             <div id="reader" className="w-full h-full"></div>
             
             {!scanning && (
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-accent/10 backdrop-blur-[2px]">
-                <Camera className="w-20 h-20 text-accent/20 mb-4" />
-                <Button onClick={startScanner} className="h-14 px-8 rounded-2xl text-lg font-black uppercase tracking-widest shadow-xl shadow-primary/20">
-                  Activer la Caméra
+                <div className="p-8 bg-white/90 rounded-full shadow-xl mb-6">
+                  <Camera className="w-16 h-16 text-accent" />
+                </div>
+                <Button onClick={startScanner} className="h-14 px-10 rounded-2xl text-lg font-black uppercase tracking-widest shadow-2xl transition-transform active:scale-95">
+                  Lancer le Scan
                 </Button>
               </div>
             )}
 
             {loading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-10">
-                <Loader2 className="w-12 h-12 text-white animate-spin" />
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm z-10">
+                <Loader2 className="w-16 h-16 text-white animate-spin mb-4" />
+                <p className="text-white font-black uppercase tracking-widest">Validation...</p>
               </div>
             )}
           </div>
 
           {hasCameraPermission === false && (
-            <Alert variant="destructive" className="rounded-2xl">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Caméra requise</AlertTitle>
-              <AlertDescription>
-                Veuillez autoriser l'accès à la caméra dans les paramètres de votre navigateur pour scanner les tickets.
+            <Alert variant="destructive" className="rounded-2xl border-2">
+              <AlertCircle className="h-5 w-5" />
+              <AlertTitle className="font-bold">Accès refusé</AlertTitle>
+              <AlertDescription className="text-xs font-medium">
+                Vous devez autoriser la caméra pour valider les tickets.
               </AlertDescription>
             </Alert>
           )}
 
           {lastResult && (
             <div className={cn(
-                "p-4 rounded-2xl border-2 animate-in fade-in slide-in-from-top-2",
-                lastResult.success ? "bg-green-50 border-green-200 text-green-900" : "bg-red-50 border-red-200 text-red-900"
+                "p-5 rounded-[1.5rem] border-2 animate-in fade-in slide-in-from-top-4 duration-500",
+                lastResult.success && !lastResult.alreadyValidated ? "bg-green-50 border-green-500 text-green-900" : 
+                lastResult.alreadyValidated ? "bg-amber-50 border-amber-500 text-amber-900" :
+                "bg-red-50 border-red-500 text-red-900"
             )}>
-              <div className="flex items-center gap-3 mb-2">
-                {lastResult.success ? <CheckCircle2 className="w-6 h-6 text-green-600" /> : <AlertCircle className="w-6 h-6 text-red-600" />}
-                <p className="font-black uppercase text-sm tracking-widest">{lastResult.message}</p>
+              <div className="flex items-center gap-3 mb-4">
+                {lastResult.success && !lastResult.alreadyValidated ? <CheckCircle2 className="w-8 h-8 text-green-600" /> : <AlertCircle className="w-8 h-8 text-amber-600" />}
+                <div>
+                    <p className="font-black uppercase text-base tracking-tight">{lastResult.message}</p>
+                    <p className="text-[10px] font-bold uppercase opacity-60">Status: {lastResult.alreadyValidated ? 'Déjà scanné' : 'Validé à l\'instant'}</p>
+                </div>
               </div>
+              
               {lastResult.ticket && (
-                <div className="bg-white/50 p-3 rounded-xl text-xs space-y-1 border border-black/5">
-                  <p><strong>Code:</strong> {lastResult.ticket.code}</p>
-                  <p><strong>Type:</strong> <span className="uppercase font-bold">{lastResult.ticket.type}</span></p>
+                <div className="bg-white/80 p-4 rounded-xl text-xs space-y-2 border border-black/5 shadow-inner">
+                  <div className="flex justify-between">
+                    <span className="font-bold text-muted-foreground">CODE :</span>
+                    <span className="font-black font-code text-sm">{lastResult.ticket.code}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-bold text-muted-foreground">TYPE :</span>
+                    <span className="font-black uppercase px-2 py-0.5 bg-accent/10 rounded text-accent">{lastResult.ticket.type}</span>
+                  </div>
                 </div>
               )}
+              
               <Button 
                 variant="outline" 
-                size="sm" 
-                className="w-full mt-4 h-10 font-bold gap-2 bg-white"
+                className="w-full mt-6 h-12 font-black uppercase tracking-widest gap-2 bg-white border-2 hover:bg-white/90"
                 onClick={() => setLastResult(null)}
               >
-                <RefreshCw className="w-4 h-4" /> Suivant
+                <RefreshCw className="w-4 h-4" /> Ticket Suivant
               </Button>
             </div>
           )}
 
-          {scanning && (
-            <Button variant="secondary" onClick={stopScanner} className="w-full h-12 rounded-xl font-bold">
-              Arrêter le scanner
-            </Button>
+          {scanning && !lastResult && (
+            <div className="text-center space-y-4">
+                <p className="text-xs font-black text-muted-foreground animate-pulse uppercase tracking-widest">
+                  Visez le QR code du ticket
+                </p>
+                <Button variant="ghost" size="sm" onClick={stopScanner} className="font-bold text-red-500 hover:text-red-600 hover:bg-red-50">
+                  Arrêter la caméra
+                </Button>
+            </div>
           )}
         </CardContent>
       </Card>
 
-      <footer className="mt-8 text-center text-muted-foreground text-xs font-medium">
-        <p>© 2024 D3 TICKET — Système de validation sécurisé</p>
+      <footer className="mt-8 text-center text-muted-foreground text-[10px] font-bold uppercase tracking-widest opacity-40">
+        <p>© 2024 D3 TICKET — Validation Sécurisée Firestore</p>
       </footer>
     </main>
   );
