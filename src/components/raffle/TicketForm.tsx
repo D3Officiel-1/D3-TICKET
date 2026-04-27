@@ -8,12 +8,13 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Printer, Image as ImageIcon, Palette, Layers, Ticket, Star, X, Wand2, Ruler, Plus, Target, Sparkles, CheckCheck, FileDown, Loader2, QrCode, RefreshCw, Type, Circle, Square, LayoutGrid, Paintbrush, ChevronDown, ShieldCheck, Crown, School } from 'lucide-react';
+import { Printer, Image as ImageIcon, Palette, Layers, Ticket, Star, X, Wand2, Ruler, Plus, Target, Sparkles, CheckCheck, FileDown, Loader2, QrCode, RefreshCw, Type, Circle, Square, LayoutGrid, Paintbrush, ChevronDown, ShieldCheck, Crown, School, ScanLine } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useToast } from '@/hooks/use-toast';
-import { fetchTicketsAction } from '@/app/actions/tickets';
+import { fetchTicketsAction, markTicketsAsPrintedAction } from '@/app/actions/tickets';
 import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import Link from 'next/link';
 
 interface TicketFormProps {
   config: TicketConfig;
@@ -27,6 +28,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
   const [localLibrary, setLocalLibrary] = useState<string[]>([]);
   const [isExporting, setIsExporting] = useState(false);
   const [isFetchingCodes, setIsFetchingCodes] = useState(false);
+  const [isMarkingAsPrinted, setIsMarkingAsPrinted] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -67,7 +69,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
       updateFields({ fetchedCodes: codes });
       toast({
         title: "Codes récupérés",
-        description: `${codes.length} codes ${config.ticketStatus.toUpperCase()} synchronisés.`,
+        description: `${codes.length} codes ${config.ticketStatus.toUpperCase()} disponibles (non imprimés).`,
       });
       return codes;
     } catch (error: any) {
@@ -81,6 +83,25 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
     } finally {
       setIsFetchingCodes(false);
     }
+  };
+
+  const handleMarkAsPrinted = async () => {
+      if (config.fetchedCodes.length === 0) return;
+      
+      setIsMarkingAsPrinted(true);
+      try {
+          await markTicketsAsPrintedAction(config.fetchedCodes);
+          toast({
+              title: "Inventaire à jour",
+              description: `${config.fetchedCodes.length} tickets marqués comme imprimés dans Firestore.`,
+          });
+          // On vide les codes pour éviter de les réutiliser immédiatement
+          updateFields({ fetchedCodes: [] });
+      } catch (e: any) {
+          toast({ variant: "destructive", title: "Erreur", description: e.message });
+      } finally {
+          setIsMarkingAsPrinted(false);
+      }
   };
 
   const addNumbering = () => {
@@ -279,6 +300,16 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
 
   return (
     <div className="space-y-8 bg-white p-6 rounded-2xl shadow-sm border border-border">
+      
+      {/* Scanner Quick Access */}
+      <div className="flex gap-2">
+        <Link href="/scan" className="w-full">
+            <Button variant="outline" className="w-full h-12 gap-2 font-black uppercase tracking-widest text-accent border-accent/20 hover:bg-accent/5">
+                <ScanLine className="w-5 h-5" /> Mode Scanneur
+            </Button>
+        </Link>
+      </div>
+
       {/* Format Section */}
       <div>
         <h2 className="text-xl font-bold flex items-center gap-2 mb-6 text-accent">
@@ -804,9 +835,24 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
           </div>
         </div>
         {config.fetchedCodes.length > 0 && (
-          <p className="mt-2 text-xs font-bold text-green-600 flex items-center gap-1">
-            <CheckCheck className="w-3 h-3" /> {config.fetchedCodes.length} codes <strong>{config.ticketStatus.toUpperCase()}</strong> chargés.
-          </p>
+          <div className="mt-4 space-y-3">
+              <p className="text-xs font-bold text-green-600 flex items-center gap-1">
+                <CheckCheck className="w-3 h-3" /> {config.fetchedCodes.length} codes <strong>{config.ticketStatus.toUpperCase()}</strong> chargés.
+              </p>
+              <Button 
+                variant="secondary" 
+                size="sm" 
+                className="w-full h-10 gap-2 font-bold text-xs uppercase"
+                onClick={handleMarkAsPrinted}
+                disabled={isMarkingAsPrinted}
+              >
+                {isMarkingAsPrinted ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCheck className="w-4 h-4" />}
+                Marquer ces {config.fetchedCodes.length} codes comme imprimés
+              </Button>
+              <p className="text-[9px] text-muted-foreground italic">
+                Ceci retirera les codes de l'inventaire pour ne plus les imprimer par la suite.
+              </p>
+          </div>
         )}
       </div>
 

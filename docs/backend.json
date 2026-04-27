@@ -19,10 +19,19 @@
           "type": "string",
           "description": "Statut du ticket (valid, used, etc.)."
         },
+        "imprimer": {
+          "type": "boolean",
+          "description": "Désigne si le ticket a déjà été imprimé."
+        },
         "createdAt": {
           "type": "string",
           "format": "date-time",
           "description": "Date de création."
+        },
+        "validatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Date de validation (scan)."
         }
       },
       "required": ["code", "type"]
