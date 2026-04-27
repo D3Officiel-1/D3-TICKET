@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "Ticket": {
@@ -11,7 +12,8 @@
         },
         "type": {
           "type": "string",
-          "description": "Le type de ticket (ex: standard, vip)."
+          "description": "Le type de ticket (ex: standard, vip, st_exupery).",
+          "enum": ["standard", "vip", "st_exupery"]
         },
         "status": {
           "type": "string",

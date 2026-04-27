@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Printer, Image as ImageIcon, Palette, Layers, Ticket, Star, X, Wand2, Ruler, Plus, Target, Sparkles, CheckCheck, FileDown, Loader2, QrCode, RefreshCw, Type, Circle, Square, LayoutGrid, Paintbrush, ChevronDown, ShieldCheck, Crown } from 'lucide-react';
+import { Printer, Image as ImageIcon, Palette, Layers, Ticket, Star, X, Wand2, Ruler, Plus, Target, Sparkles, CheckCheck, FileDown, Loader2, QrCode, RefreshCw, Type, Circle, Square, LayoutGrid, Paintbrush, ChevronDown, ShieldCheck, Crown, School } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useToast } from '@/hooks/use-toast';
 import { fetchTicketsAction } from '@/app/actions/tickets';
@@ -62,7 +62,6 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
   const fetchCodesFromAPI = async (quantity: number) => {
     setIsFetchingCodes(true);
     try {
-      // On utilise ticketStatus (standard/vip) pour la récupération
       const codes = await fetchTicketsAction(quantity, config.ticketStatus);
       
       updateFields({ fetchedCodes: codes });
@@ -738,17 +737,17 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
       <div>
         <h2 className="text-xl font-bold flex items-center gap-2 mb-6 text-accent"><Sparkles className="w-5 h-5" /> Séries & Numéros</h2>
         
-        {/* VIP Designation Button */}
+        {/* VIP & St Exupéry Designation Buttons */}
         <div className="mb-6 p-4 bg-accent/5 rounded-2xl border-2 border-accent/20 space-y-3">
           <Label className="text-xs uppercase font-black text-accent flex items-center gap-2">
             <ShieldCheck className="w-4 h-4" /> Statut du Ticket (Obligatoire)
           </Label>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <Button 
               type="button"
               variant={config.ticketStatus === 'standard' ? "default" : "outline"}
               className={cn(
-                "h-12 font-black uppercase tracking-widest gap-2",
+                "h-12 font-black uppercase tracking-widest gap-2 text-[10px]",
                 config.ticketStatus === 'standard' && "bg-accent hover:bg-accent/90"
               )}
               onClick={() => updateFields({ ticketStatus: 'standard', fetchedCodes: [] })}
@@ -759,16 +758,27 @@ export const TicketForm: React.FC<TicketFormProps> = ({ config, onChange, onPrin
               type="button"
               variant={config.ticketStatus === 'vip' ? "default" : "outline"}
               className={cn(
-                "h-12 font-black uppercase tracking-widest gap-2",
+                "h-12 font-black uppercase tracking-widest gap-2 text-[10px]",
                 config.ticketStatus === 'vip' && "bg-primary hover:bg-primary/90"
               )}
               onClick={() => updateFields({ ticketStatus: 'vip', fetchedCodes: [] })}
             >
               <Crown className="w-4 h-4" /> VIP
             </Button>
+            <Button 
+              type="button"
+              variant={config.ticketStatus === 'st_exupery' ? "default" : "outline"}
+              className={cn(
+                "h-12 font-black uppercase tracking-widest gap-2 text-[10px]",
+                config.ticketStatus === 'st_exupery' && "bg-blue-600 hover:bg-blue-700"
+              )}
+              onClick={() => updateFields({ ticketStatus: 'st_exupery', fetchedCodes: [] })}
+            >
+              <School className="w-4 h-4" /> St-Exupéry
+            </Button>
           </div>
           <p className="text-[10px] text-muted-foreground font-medium italic">
-            * Désigner comme VIP forcera l'utilisation des codes VIP de Firestore.
+            * Désigner un statut forcera l'utilisation des codes correspondants de Firestore.
           </p>
         </div>
 

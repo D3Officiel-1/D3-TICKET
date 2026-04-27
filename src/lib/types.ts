@@ -1,6 +1,6 @@
 
 export type TicketType = 'event_vip' | 'event' | 'raffle' | 'custom';
-export type TicketStatus = 'standard' | 'vip';
+export type TicketStatus = 'standard' | 'vip' | 'st_exupery';
 
 export interface NumberingInstance {
   id: string;
