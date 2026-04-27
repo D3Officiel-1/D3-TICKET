@@ -6,8 +6,8 @@ import { getFirestore, collection, query, where, getDocs, updateDoc, limit } fro
 import { firebaseConfig } from "@/firebase/config";
 
 /**
- * Valide un ticket en le marquant comme imprimé (et donc déjà utilisé)
- * Retourne les détails du ticket si trouvé.
+ * Valide un ticket en le marquant comme 'imprimer: true' (validé) dans Firestore.
+ * Cette action est irréversible pour garantir l'unicité du scan.
  */
 export async function validateTicketScanAction(code: string) {
   try {
@@ -19,36 +19,37 @@ export async function validateTicketScanAction(code: string) {
     const querySnapshot = await getDocs(q);
 
     if (querySnapshot.empty) {
-      return { success: false, message: "Ticket invalide : code inconnu dans la base." };
+      return { success: false, message: "Ticket invalide : ce code n'existe pas." };
     }
 
     const ticketDoc = querySnapshot.docs[0];
     const data = ticketDoc.data();
 
-    // Si déjà marqué comme imprimé/validé
+    // Vérification de l'état actuel : si déjà marqué comme imprimé/validé
     if (data.imprimer === true) {
       return { 
         success: true, 
         alreadyValidated: true, 
         ticket: data,
-        message: "Attention : Ce ticket a déjà été validé ou imprimé." 
+        message: "Attention : Ce ticket a déjà été validé." 
       };
     }
 
-    // Mise à jour du statut dans Firestore : scanné = validé = imprimer=true
+    // MISE À JOUR CRITIQUE : Marquer le ticket comme imprimé (donc utilisé)
     await updateDoc(ticketDoc.ref, {
       imprimer: true,
-      validatedAt: new Date().toISOString()
+      validatedAt: new Date().toISOString(),
+      status: "used"
     });
 
     return { 
       success: true, 
       alreadyValidated: false, 
-      ticket: data,
-      message: "Ticket validé avec succès !" 
+      ticket: { ...data, imprimer: true },
+      message: "Ticket validé ! Accès autorisé." 
     };
   } catch (error: any) {
-    console.error("Erreur Scan:", error);
-    throw new Error(error.message || "Erreur lors de la validation du scan.");
+    console.error("Erreur Scan Logic:", error);
+    throw new Error(error.message || "Erreur technique lors de la validation.");
   }
 }
